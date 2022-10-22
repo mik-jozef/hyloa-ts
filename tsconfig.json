@@ -1,0 +1,21 @@
+{
+  "compileOnSave": true,
+  "compilerOptions": {
+    "downlevelIteration": true,
+    "lib": [ "es2021" ],
+    "newLine": "lf",
+    "module": "es2022",
+    "moduleResolution": "node",
+    "noImplicitThis": true,
+    "noUnusedLocals": true,
+    "noUnusedParameters": true,
+    "outDir": "local/out",
+    "preserveConstEnums": true,
+    "removeComments": true,
+    "resolveJsonModule": true,
+    "rootDir": "src-ts",
+    "sourceMap": true,
+    "strict": true,
+    "target": "ES2017",
+  },
+}

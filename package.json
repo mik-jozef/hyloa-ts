@@ -1,0 +1,18 @@
+{
+  "name": "hyloa",
+  "version": "0.0.0",
+  "main": "out/hlt0.js",
+  "scripts": {
+    "build": "rm -r ./local/out \n tsc",
+    "run": "node ./local/out/hrt0.js"
+  },
+  "devDependencies": {
+    "@types/node": "^12.20.55",
+    "typescript": "^4.8.4"
+  },
+  "type": "module",
+  "dependencies": {
+    "case": "^1.6.3",
+    "lr-parser-typescript": "^0.0.4"
+  }
+}

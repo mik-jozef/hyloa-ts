@@ -1,10 +1,11 @@
-import { Caten, Match, MergedTokens, Or, Repeat, SyntaxTreeNode, Token } from "lr-parser-typescript";
+import { Caten, Match, MergedTokens, Or, Repeat, SyntaxTreeNode as syntaxTreeNodes, Token } from "lr-parser-typescript";
 
 import { token } from "./tokenizer.js";
 
 
-class ImportRest extends SyntaxTreeNode {
-  rest!: ImportRest | null;
+type ImportRest = importsRest;
+class importsRest extends syntaxTreeNodes {
+  rest!: importsRest | null;
   
   static rule: Or = new Or(
     new Caten(),
@@ -12,7 +13,7 @@ class ImportRest extends SyntaxTreeNode {
     new Caten(
       token('identifier'),
       token('/'),
-      new Match(false, 'rest', ImportRest),
+      new Match(false, 'rest', importsRest),
     )
   );
 }
@@ -20,13 +21,14 @@ class ImportRest extends SyntaxTreeNode {
 // TODO proper types in the parser.
 type Raw<T> = T; // Let's cheat a little.
 
-export class ImportAst extends SyntaxTreeNode {
+export type ImportAst = importsAst;
+export class importsAst extends syntaxTreeNodes {
   importKeyword!: Token<'import'>;
   pathMergedTokens!: MergedTokens;
   
   path: string;
   
-  constructor(obj: Raw<ImportAst>) {
+  constructor(obj: Raw<importsAst>) {
     super(obj);
     
     this.path = obj.pathMergedTokens.value
@@ -48,7 +50,7 @@ export class ImportAst extends SyntaxTreeNode {
           new Repeat(new Caten(token('..'), token('/')), new Caten(), 1),
         ),
         // Make SyntaxTreeNode extend Pattern
-        new Match(false, 'null', ImportRest),
+        new Match(false, 'null', importsRest),
       ),
     ),
     

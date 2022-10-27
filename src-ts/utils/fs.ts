@@ -1,17 +1,20 @@
 import { promises, ReadStream } from "fs";
 
 
-interface BufferReader {
+export type BufferReader = bufferReaders;
+interface bufferReaders {
   constructor(buffer: Buffer): any
 }
 
-interface StreamReader {
+export type StreamReader = streamReaders;
+interface streamReaders {
   constructor(inStream: ReadStream): any
 }
 
-type FileReader = BufferReader | StreamReader;
+type FileReader = bufferReaders | streamReaders;
 
-export class Path {
+export type Path = paths;
+export class paths {
   constructor(
     public folders: string[],
     public file: string | null,
@@ -26,7 +29,8 @@ export class Path {
 // Hyloa is capability-based, it's gonna use Folder and File
 // classes, and a program will need to be given one to be able
 // to open it.
-export class Folder {
+export type Folder = folders;
+export class folders {
   constructor(
     // Should be without a trailing slash. Not part of Hyloa.
     private path: string,
@@ -49,5 +53,11 @@ export class Folder {
     if (fileReader === 'utf8') return promises.readFile(path, 'utf8');
     
     throw new Error('Unimplemented');
+  }
+  
+  writeFile(filePath: Path, str: string) {
+    const path = this.path + filePath.toString();
+    
+    return promises.writeFile(path, str);
   }
 }

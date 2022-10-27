@@ -1,14 +1,18 @@
-import { Tokenizer } from 'lr-parser-typescript';
+import { Tokenizer as tokenizers } from 'lr-parser-typescript';
 
 // TODO
 // https://github.com/mik-jozef/carpicley/blob/main/src/parser/tokenizer.ts
-export const tokenizer = new Tokenizer(<const>[
+
+export type TokenString = typeof tokenStringArray[number];
+export const tokenStringArray = [
   'identifier',
   'import',
   'return',
   'thelse',
   'number',
+  'await',
   'class',
+  'trait',
   'thand',
   'where',
   'else',
@@ -33,6 +37,8 @@ export const tokenizer = new Tokenizer(<const>[
   '..',
   '(',')','[',']','{','}','<','>',',','.','!','@','#','$', '=', '_',
   '%','^','&','*',';',':','\'','\\','|','/','?','`','~', '+', '-',
-]);
+] as const;
+
+export const tokenizer = new tokenizers(tokenStringArray);
 
 export const token = tokenizer.token.bind(tokenizer);

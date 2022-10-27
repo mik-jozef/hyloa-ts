@@ -1,16 +1,17 @@
 import * as ToCase from 'case';
 
-import { ModuleAst } from '../syntax-tree/module-ast.js';
-import { Path } from '../utils/fs.js';
-import { Import } from './import.js';
-import { PackageAliases } from './package-settings.js';
+import { modulesAst } from '../syntax-tree/modules-ast.js';
+import { paths } from '../utils/fs.js';
+import { Import, imports } from './imports.js';
+import { PackageAliases } from './packages.js';
 
 
 /*/
   Paths are stored in PascalCase. The corresponding filesystem entries must
   be in snake-case.
 /*/
-export class ModulePath {
+export type ModulePath = modulePaths;
+export class modulePaths {
   constructor(
     // Stored without the @ sign.
     public alias: string | null,
@@ -18,6 +19,7 @@ export class ModulePath {
     public file: string | null,
   ) {}
   
+  // TODO should this contain a package id?
   toString(): string {
     return (
       (this.alias === null ? '/' : '@' + this.alias + '/')
@@ -27,14 +29,14 @@ export class ModulePath {
   }
   
   // Returns null if there is an unknown alias.
-  toFsPath(aliases: PackageAliases | null): Path | null {
+  toFsPath(aliases: PackageAliases | null): paths | null {
     const aliasFolders: string[] | null = this.alias === null
       ? [] : aliases ? aliases.resolve(this.alias) : null;
     const mappedFolders = this.folders.map(folder => ToCase.kebab(folder) + '/');
     
     if (aliasFolders === null) return null;
     
-    return new Path(
+    return new paths(
       [ ...aliasFolders, ...mappedFolders ],
       (this.file ? ToCase.kebab(this.file) : '-') + '.hyloa',
     );
@@ -47,7 +49,7 @@ export class ModulePath {
   }
   
   copy(): ModulePath {
-    return new ModulePath(this.alias, [ ...this.folders ], this.file);
+    return new modulePaths(this.alias, [ ...this.folders ], this.file);
   }
   
   private resolveRelativeImport(importedPath: string): ModulePath | null {
@@ -71,7 +73,7 @@ export class ModulePath {
     /*/
     const file = importedPathArr.pop() || null;
     
-    return new ModulePath(this.alias, [ ...folders, ...importedPathArr ], file);
+    return new modulePaths(this.alias, [ ...folders, ...importedPathArr ], file);
   }
   
   // Returns null if importedPath is a relative path that escapes the root.
@@ -87,24 +89,25 @@ export class ModulePath {
     const alias = importedPath[0] === '@' ? importedPathArr[0].substring(1) : this.alias;
     const [ , ...folders ] = importedPathArr;
     
-    if (folders.length === 0) return new ModulePath(alias, folders, null);
+    if (folders.length === 0) return new modulePaths(alias, folders, null);
     
     const file = folders.pop() || null;
     
-    return new ModulePath(alias, folders, file);
+    return new modulePaths(alias, folders, file);
   }
 }
 
-export const mainPath = new ModulePath(null, [], null);
+export const mainPath = new modulePaths(null, [], null);
 
 
-export class Module {
+export type Module = modules;
+export class modules {
   imports: Import[];
   
   constructor(
-    public ast: ModuleAst,
+    public ast: modulesAst,
     public path: ModulePath,
   ) {
-    this.imports = ast.imports.map(impr => new Import(impr, path))
+    this.imports = ast.imports.map(impr => new imports(impr, path))
   }
 }

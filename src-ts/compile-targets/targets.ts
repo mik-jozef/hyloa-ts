@@ -1,10 +1,12 @@
-import { Program } from "../program/program.js";
+import { programs } from "../program/projects.js";
 import { exit } from "../utils/exit.js";
-import { Folder } from "../utils/fs.js";
+import { Folder, paths } from "../utils/fs.js";
+import { compile } from "./web/-.js";
 
 
-export abstract class Target {
-  abstract compile(outFolder: Folder, program: Program): Promise<void>
+export type Target = targets;
+export abstract class targets {
+  abstract compile(outFolder: Folder, program: programs): Promise<void>
 }
 
 /*/
@@ -12,40 +14,73 @@ export abstract class Target {
   It may emit whatever code it wants as long as its
   behavior is in agreement with the specification.
   
-  That includes things the programmer did not explicitly
-  ask for, like for instance setting up "Cache-Control"
-  headers or making color transitions animated.
+  The specification may ask for things that work very
+  differently from html5 & friends. Some examples:
+  
+  0. A hyloa app is offline-first (the compiled app
+     will set up service workers, and so on)
+  1. Color transitions are animated by default.
+  
+  TODO The specification is yet to be written.
+  TODO this comment describes a future state of things.
 /*/
-export class Web extends Target {
+export type Web = webTarget;
+export class webTarget extends targets {
   constructor(
-    public outFile = 'out.html',
+    public outFilePath = new paths([ 'local' ], 'out.html' ),
   ) { super(); }
   
-  async compile(_outFolder: Folder, _program: Program): Promise<void> {
-    // TODO
+  async compile(outFolder: Folder, program: programs): Promise<void> {
+    return compile(outFolder, this.outFilePath, program);
   }
 }
 
 /*/
   WebRaw tries to emit code that is as close to the original
   as possible, and doesn't do anything extra.
+  
+  This target does *NOT* conform to the specification.
+  For example, dynamic stack recursion is not supported
+  since JavaScript does not support it.
+  
+  TODO this comment describes a future state of things.
 /*/
-export class WebRaw extends Target {
-  async compile(_outFolder: Folder, _program: Program): Promise<void> {
+export class WebRaw extends targets {
+  async compile(_outFolder: Folder, _program: programs): Promise<void> {
     exit('Target "WebRaw" is not supported yet.')
+  }
+}
+
+
+type NodeRawAll = Pick<NodeJs, 'version'>;
+type NodeRaw = Partial<NodeRawAll>;
+
+export type NodeJs = nodeJsTargets;
+export class nodeJsTargets extends targets {
+  version: '18' = '18';
+  outFilePath = new paths([ 'local' ], 'out.mjs' );
+  
+  constructor(options: NodeRaw) {
+    super();
+    
+    Object.assign(this, options);
+  }
+  
+  compile(outFolder: Folder, program: programs): Promise<void> {
+    throw new Error("Method not implemented.");
   }
 }
 
 /*/
   // Pipe dreams follow
-  class Llvm {}
-  class WindowsExe {}
-  class MacOsBunde {}
-  class AndroidApp {}
+  class llvmTargets {}
+  class windowsExeTargets {}
+  class macOsBundeTargets {}
+  class androidAppTargets {}
   // TODO what can I use for Linux? Elf?
-  // class SomethingLinuxey {}
+  // class somethingLinuxeyTargets {}
 
   // Pipe dreams squared
-  class Amd64 {}
-  class Avr {}
+  class amd64Targets {}
+  class avrTargets {}
 /*/

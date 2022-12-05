@@ -1,67 +1,103 @@
-import { mainPath, ModulePath } from './program/modules.js';
-import { PackageAliases } from './program/packages.js';
-import { fuckThrow } from './utils/exit.js';
-import { folders } from './utils/fs.js';
+// @ts-ignore
+type String = string; type Null = null; type Boolean = boolean; type Number = number; type BigInt = bigint; type Symbol = symbol; type Unknown = unknown; type Never = never; type Any = any; type Void = void
+
+import { moduleNotFoundErrors, ModuleLoadError, otherModuleProviderErrors, missingProjectJsonErrors, MissingProjectJson, OtherProjectJsonLoadError, otherProjectJsonLoadErrors, ModuleNotFound } from './programs/errors.js';
+import { mainPath, ModulePath, modulePaths } from './programs/modules.js';
+import { PackageId } from './programs/packages.js';
+import { fileNotFoundErrors, Folder, paths } from './utils/fs.js';
 
 
-type ModuleSourceRet = NodeJS.ErrnoException | string | null;
+type MaybePromise<T> = T | Promise<T>;
 
-// It must be able to load package settings even if aliases are still unknown.
+/*/
+  It must be able to load `package.json` even if aliases are
+  still unknown.
+  In Hyloa, perhaps make the returned errors generic?
+/*/
 export type ModuleProvider = moduleProviders;
 export abstract class moduleProviders {
-  abstract setAliases(packageId: string, aliases: PackageAliases): moduleProviders
+  /*/
+    Everything that has a modulePath is a module, and that
+    includes `package.json`.
+  /*/
+  abstract getModuleSource(path: ModulePath): MaybePromise<String | ModuleLoadError>
   
-  // Returns null if the path contains an unrecognized alias.
-  abstract getModuleSource(packageId: string, path: ModulePath):
-    ModuleSourceRet | Promise<ModuleSourceRet>
+  abstract getProjectJson(projectName: String): MaybePromise<String | MissingProjectJson | OtherProjectJsonLoadError>
 }
 
+export type FileSystemProvider = fileSystemProviders;
 export class fileSystemProviders implements moduleProviders {
-  aliases = new Map<string, PackageAliases>();
-  
   constructor(
-    public rootFolder: folders,
+    public rootFolder: Folder,
   ) {}
   
-  setAliases(packageId: string, aliases: PackageAliases): fileSystemProviders {
-    this.aliases.set(packageId, aliases);
-    
-    return this;
-  }
-  
-  async getModuleSource(
-    packageId: string,
-    path: ModulePath,
-  ):
-    Promise<NodeJS.ErrnoException | string | null>
-  {
-    const filePath = path.toFsPath(this.aliases.get(packageId) || null);
-    
-    if (filePath === null) return null;
-    
-    const fileContent =
-      await fuckThrow(() => this.rootFolder.readFile(filePath, 'utf8'))
+  async getModuleSource(modulePath: ModulePath): Promise<String | ModuleLoadError> {
+    const filePath = modulePath.toFsPath();
+    const fileContent =  await this.rootFolder.readFile(filePath, 'utf8');
     
     if (typeof fileContent !== 'string') {
-      if(fileContent.code === 'ENOENT') return fileContent;
-      
-      throw fileContent;
+      return fileContent instanceof fileNotFoundErrors
+        ? new moduleNotFoundErrors(modulePath)
+        : new otherModuleProviderErrors(modulePath, fileContent);
+    }
+    
+    return fileContent;
+  }
+  
+  async getProjectJson(projectName: string): Promise<String | MissingProjectJson | OtherProjectJsonLoadError> {
+    const filePath = new paths([ 'projects', projectName ], 'project.json');
+    const fileContent =  await this.rootFolder.readFile(filePath, 'utf8');
+    
+    if (typeof fileContent !== 'string') {
+      return fileContent instanceof fileNotFoundErrors
+        ? new missingProjectJsonErrors(projectName)
+        : new otherProjectJsonLoadErrors(projectName, fileContent);
     }
     
     return fileContent;
   }
 }
 
+/*/
+  Only serves `project.json`, `package.json` and the main path
+  of a single package.
+/*/
 export type SingleModuleProvider = singleModuleProviders;
 export class singleModuleProviders implements moduleProviders {
+  static defaultPackageJson =
+    '{ dependencies: {}, devDependencies: {}, publishTo: {} }';
+  
+  static defaultProjectJson =
+    '{ programs: {}, registries: {}, defaultRegistry: null }';
+  
   constructor(
-    public moduleContent: string,
+    public projectName: String,
+    public packageId: PackageId,
+    public moduleContent: String,
+    public projectJson: String = singleModuleProviders.defaultProjectJson,
+    public packageJson: String = singleModuleProviders.defaultPackageJson,
   ) {}
   
-  setAliases(): SingleModuleProvider { return this; }
+  getModuleSource(path: ModulePath): String | ModuleNotFound {
+    /*/
+      `package.hyloa.json` is only supported by file system
+      providers, to avoid a potential conflict with npm's
+      `package.json`.
+    /*/
+    if (path.equals(new modulePaths(this.packageId, [], 'package.json'))) {
+      return this.packageJson;
+    }
+    
+    return path.equals(mainPath(this.packageId))
+      ? this.moduleContent
+      : new moduleNotFoundErrors(path);
+  }
   
-  // TODO provide default package.json.
-  getModuleSource(_packageId: string, path: ModulePath) {
-    return path.equals(mainPath) ? this.moduleContent : null;
+  getProjectJson(projectName: string): String | MissingProjectJson | OtherProjectJsonLoadError {
+    if (projectName === this.projectName) {
+      return this.packageJson
+    }
+    
+    return new missingProjectJsonErrors(projectName);
   }
 }

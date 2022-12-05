@@ -1,7 +1,7 @@
-import { programs, projects } from "../../program/projects";
+import { programs, projects } from "../../programs/projects";
 import { folders, paths } from "../../utils/fs";
 import { topLevelCodeEmitters } from "./code-emitters";
-import { moduleCompilers } from "./module-compilers";
+import { ModuleEmitter, moduleEmitters } from "./module-compilers";
 
 
 const outFileTemplate = (script: string) =>
@@ -19,7 +19,7 @@ const outFileTemplate = (script: string) =>
 <div id="content-root">
 
 <script type="module">
-  ${script}
+${script}
 </script>
 
 </body>
@@ -35,23 +35,23 @@ export async function compile(
   Promise<void>
 {
   const emitter = new topLevelCodeEmitters('  ');
-  const moduleCompilers = new Set<moduleCompilers>();
+  const moduleEmitterSet = new Set<ModuleEmitter>();
   
   // TODO
   for (const pkg of project.packages.values()) {
     for (const module of program.modules.values()) {
-      moduleCompilers.add(new moduleCompilers(module, emitter));
+      moduleEmitterSet.add(new moduleEmitters(module, emitter));
     }
   }
   
-  for (const moduleCompiler of moduleCompilers) {
-    moduleCompiler.emitSkeletons();
+  for (const moduleEmitter of moduleEmitterSet) {
+    moduleEmitter.emitSkeletons();
   }
   
   emitter.emit('\n\n');
   
-  for (const moduleCompiler of moduleCompilers) {
-    moduleCompiler.emitInitializers();
+  for (const moduleEmitter of moduleEmitterSet) {
+    moduleEmitter.emitInitializers();
   }
   
   outFolder.writeFile(file, outFileTemplate(emitter.getCode()));

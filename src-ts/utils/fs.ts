@@ -1,23 +1,78 @@
-import { promises, ReadStream } from "fs";
+// @ts-ignore
+type String = string; type Null = null; type Boolean = boolean; type Number = number; type BigInt = bigint; type Symbol = symbol; type Unknown = unknown; type Never = never; type Any = any; type Void = void
+
+import { createReadStream, promises, ReadStream } from "fs";
 
 
-export type BufferReader = bufferReaders;
-interface bufferReaders {
-  constructor(buffer: Buffer): any
+export type FileSystemError = fileSystemErrors;
+export abstract class fileSystemErrors {
+  abstract path: Path;
 }
 
-export type StreamReader = streamReaders;
-interface streamReaders {
-  constructor(inStream: ReadStream): any
+export type FileNotFoundError = fileNotFoundErrors;
+export class fileNotFoundErrors extends fileSystemErrors {
+  constructor(
+    public path: Path,
+  ) { super(); }
 }
 
-type FileReader = bufferReaders | streamReaders;
+export type OtherFsError = otherFsErrors;
+export class otherFsErrors extends fileSystemErrors {
+  constructor(
+    public path: Path,
+    public error: NodeJS.ErrnoException,
+  ) { super(); }
+}
+
+
+interface BufferReader<T> {
+  read(): T | Promise<T>;
+}
+
+interface StreamReader<T> {
+  read(): T | Promise<T>;
+}
+
+/*/
+  This is just a helper type, because it does not support
+  being extended with a class that prefers streams.
+/*/
+type ReaderClassPrefersBuffer<T> = {
+  new(buffer: Buffer): BufferReader<T>;
+  
+  preferredConstructorArgument: 'buffer';
+}
+
+/*/
+  This is just a helper type, because it does not support
+  being extended with a class that prefers buffers.
+/*/
+type ReaderClassPrefersStream<T> = {
+  new(inStream: ReadStream): StreamReader<T>;
+  
+  preferredConstructorArgument: 'stream';
+}
+
+type ReaderClassPrefers<T> =
+  ReaderClassPrefersBuffer<T> | ReaderClassPrefersStream<T>;
+
+// These classes should be extendable in Hyloa.
+export type BufferReaderClass<T> = ReaderClassPrefers<T> & {
+  new(buffer: Buffer): BufferReader<T>;
+}
+
+export type StreamReaderClass<T> = ReaderClassPrefers<T> & {
+  new(inStream: ReadStream): StreamReader<T>;
+}
+
+export type FileReaderClass<T> = BufferReaderClass<T> | StreamReaderClass<T>;
+
 
 export type Path = paths;
 export class paths {
   constructor(
-    public folders: string[],
-    public file: string | null,
+    public folders: String[],
+    public file: String | Null,
   ) {}
   
   toString() {
@@ -37,25 +92,44 @@ export class folders {
     _: 'I solemnly swear I only call this in `hrt0.ts`',
   ) {}
   
-  readFile<T extends FileReader>(filePath: Path, fileReader: FileReader): Promise<T>;
-  readFile<T extends FileReader>(filePath: Path, fileReader: 'utf8'): Promise<string>;
-  readFile<T extends FileReader>(filePath: Path, fileReader: null): Promise<Buffer>;
+  readFile<T>(filePath: Path, fileReader: FileReaderClass<T>): Promise<T | FileSystemError>;
+  readFile<T>(filePath: Path, fileReader: 'utf8'): Promise<String | FileSystemError>;
+  readFile<T>(filePath: Path, fileReader: Null): Promise<Buffer | FileSystemError>;
   
-  readFile<T extends FileReader>(
+  async readFile<T>(
     filePath: Path,
-    fileReader: FileReader | 'utf8' | null = null,
+    fileReader: FileReaderClass<T> | 'utf8' | Null = null,
   ):
-    Promise<T | Buffer | string>
+    Promise<T | Buffer | String | FileSystemError>
   {
-    const path = this.path + filePath.toString();
-    
-    if (fileReader === null) return promises.readFile(path);
-    if (fileReader === 'utf8') return promises.readFile(path, 'utf8');
-    
-    throw new Error('Unimplemented');
+    try {
+      const path = this.path + filePath.toString();
+      
+      const fileReaderOptions: unknown[] = [ 'utf8', null ];
+      
+      if (fileReaderOptions.includes(fileReader)) {
+        return await promises.readFile(path, fileReader as 'utf8' | null);
+      }
+      
+      const fileReaderClass = (fileReader as FileReaderClass<T>);
+      
+      if (fileReaderClass.preferredConstructorArgument === 'buffer') {
+        const buffer = await promises.readFile(path, null);
+        
+        return (new fileReaderClass(buffer)).read();
+      } else {
+        const stream = createReadStream(path)
+        
+        return (new fileReaderClass(stream)).read();
+      }
+    } catch (e: any) {
+      if (e.code === 'ENOENT') return new fileNotFoundErrors(filePath);
+      
+      return new otherFsErrors(filePath, e);
+    }
   }
   
-  writeFile(filePath: Path, str: string) {
+  writeFile(filePath: Path, str: String) {
     const path = this.path + filePath.toString();
     
     return promises.writeFile(path, str);

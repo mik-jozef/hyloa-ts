@@ -1,7 +1,7 @@
 import { SyntaxTreeNode, Caten, Match, Or, Repeat } from 'lr-parser-typescript';
 import { classDeclarations } from './class-declarations.js';
 
-import { importsAst } from './imports-ast.js';
+import { importsAst } from './imports-sts.js';
 import { letDeclarations } from './let-declarations.js';
 
 

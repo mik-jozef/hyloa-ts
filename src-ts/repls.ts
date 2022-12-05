@@ -3,7 +3,7 @@ import { ReadStream, WriteStream } from "tty";
 import { workspaces } from "./workspaces.js";
 import { exit } from "./utils/exit.js";
 import { singleModuleProviders } from "./module-providers.js";
-import { executionContexts } from "./program/runtime/execution-contexts.js";
+import { executionContexts } from "./programs/runtime/execution-contexts.js";
 
 type ReplOptions = {
   executionContext: executionContexts,

@@ -5,8 +5,8 @@ import { token } from './tokenizer.js';
 
 const matchType = new Match(false, 'type', token('identifier'));
 
-export type LetDeclaration = letDeclarations;
-export class letDeclarations extends syntaxTreeNodes {
+export type LetDeclaration = makeLetDeclaration;
+export class makeLetDeclaration extends syntaxTreeNodes {
   name!: IdentifierToken | null;
   
   // TODO

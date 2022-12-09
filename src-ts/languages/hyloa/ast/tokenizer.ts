@@ -39,6 +39,6 @@ export const tokenStringArray = [
   '%','^','&','*',';',':','\'','\\','|','/','?','`','~', '+', '-',
 ] as const;
 
-export const tokenizer = new tokenizers(tokenStringArray);
+export const hyloaTokenizer = new tokenizers(tokenStringArray);
 
-export const token = tokenizer.token.bind(tokenizer);
+export const token = hyloaTokenizer.token.bind(hyloaTokenizer);

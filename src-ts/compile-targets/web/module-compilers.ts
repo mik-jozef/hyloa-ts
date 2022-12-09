@@ -1,4 +1,4 @@
-import { Module } from "../../programs/modules";
+import { Module } from "../../languages/modules";
 import { CodeEmitter } from "./code-emitters";
 
 export type ModuleEmitter = moduleEmitters;

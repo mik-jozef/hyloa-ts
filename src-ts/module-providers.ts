@@ -1,9 +1,9 @@
 // @ts-ignore
 type String = string; type Null = null; type Boolean = boolean; type Number = number; type BigInt = bigint; type Symbol = symbol; type Unknown = unknown; type Never = never; type Any = any; type Void = void
 
-import { moduleNotFoundErrors, ModuleLoadError, otherModuleProviderErrors, missingProjectJsonErrors, MissingProjectJson, OtherProjectJsonLoadError, otherProjectJsonLoadErrors, ModuleNotFound } from './programs/errors.js';
-import { mainPath, ModulePath, modulePaths } from './programs/modules.js';
-import { PackageId } from './programs/packages.js';
+import { moduleNotFoundErrors, ModuleLoadError, otherModuleProviderErrors, missingProjectJsonErrors, MissingProjectJson, ProjectJsonModuleProviderError, projectJsonModuleProviderErrors, ModuleNotFound } from './languages/errors.js';
+import { mainPath, ModulePath, modulePaths } from './languages/modules.js';
+import { PackageId } from './languages/packages.js';
 import { fileNotFoundErrors, Folder, paths } from './utils/fs.js';
 
 
@@ -22,7 +22,7 @@ export abstract class moduleProviders {
   /*/
   abstract getModuleSource(path: ModulePath): MaybePromise<String | ModuleLoadError>
   
-  abstract getProjectJson(projectName: String): MaybePromise<String | MissingProjectJson | OtherProjectJsonLoadError>
+  abstract getProjectJson(projectName: String): MaybePromise<String | MissingProjectJson | ProjectJsonModuleProviderError>
 }
 
 export type FileSystemProvider = fileSystemProviders;
@@ -44,14 +44,14 @@ export class fileSystemProviders implements moduleProviders {
     return fileContent;
   }
   
-  async getProjectJson(projectName: string): Promise<String | MissingProjectJson | OtherProjectJsonLoadError> {
+  async getProjectJson(projectName: string): Promise<String | MissingProjectJson | ProjectJsonModuleProviderError> {
     const filePath = new paths([ 'projects', projectName ], 'project.json');
     const fileContent =  await this.rootFolder.readFile(filePath, 'utf8');
     
     if (typeof fileContent !== 'string') {
       return fileContent instanceof fileNotFoundErrors
         ? new missingProjectJsonErrors(projectName)
-        : new otherProjectJsonLoadErrors(projectName, fileContent);
+        : new projectJsonModuleProviderErrors(projectName, fileContent);
     }
     
     return fileContent;
@@ -93,7 +93,7 @@ export class singleModuleProviders implements moduleProviders {
       : new moduleNotFoundErrors(path);
   }
   
-  getProjectJson(projectName: string): String | MissingProjectJson | OtherProjectJsonLoadError {
+  getProjectJson(projectName: string): String | MissingProjectJson | ProjectJsonModuleProviderError {
     if (projectName === this.projectName) {
       return this.packageJson
     }

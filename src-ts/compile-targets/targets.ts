@@ -1,4 +1,4 @@
-import { programs } from "../programs/projects.js";
+import { programs } from "../languages/projects.js";
 import { exit } from "../utils/exit.js";
 import { Folder, paths } from "../utils/fs.js";
 import { compile } from "./web/-.js";

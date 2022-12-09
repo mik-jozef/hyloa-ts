@@ -1,6 +1,6 @@
 import { Caten, Match, Or, SyntaxTreeNode, Token } from "lr-parser-typescript";
-import { classDeclarations } from "./class-declarations";
-import { letDeclarations } from "./let-declarations";
+import { makeClassDeclaration } from "./class-declarations";
+import { makeLetDeclaration } from "./let-declarations";
 import { token, TokenString } from "./tokenizer";
 
 
@@ -86,7 +86,7 @@ export class TextLiteral extends SyntaxTreeNode {
 }
 
 type BottomExprs =
-  | classDeclarations
+  | makeClassDeclaration
   | ObjectLiteral
   | ArrayLiteral
   | StringLiteral // Unformatted utf-8 string.
@@ -102,7 +102,7 @@ export class BottomRung extends SyntaxTreeNode {
   static hidden = true;
   
   static rule = new Or(
-    new Match(false, 'value', classDeclarations),
+    new Match(false, 'value', makeClassDeclaration),
     matchValueObjectLiteral,
     matchValueArrayLiteral,
     new Match(false, 'value', StringLiteral),

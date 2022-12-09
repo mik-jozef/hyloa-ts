@@ -28,19 +28,25 @@ type String = string; type Null = null; type Boolean = boolean; type Number = nu
 import { Parser as parsers } from 'lr-parser-typescript';
 
 import { fileSystemProviders, ModuleProvider } from './module-providers.js';
-import { ModuleLoadTimeError, unknownVersionAliasErrors, moduleNotFoundErrors, parseErrors, runawayRelativePathErrors, SrcRange, ModuleLoadError, projectJsonErrors, projectJsonValidationErrors, otherModuleProviderErrors, moduleLoadErrors, packageJsonValidationErrors, PackageJsonValidationError, programErrors, ProjectJsonError, unknownDependencyErrors, missingRegistryErrors } from './programs/errors.js';
-import { imports } from './programs/imports.js';
-import { modules, ModulePath, Module, modulePaths } from './programs/modules.js';
-import { localPackageIds, Package, PackageId, PackageJson, packageJsons, packages, PublishedPackage, publishedPackageIds } from './programs/packages.js';
-import { Project, ProjectJson, projectJsons, projects } from './programs/projects.js';
-import { modulesAst } from './syntax-trees/modules-ast.js';
-import { tokenizer } from './syntax-trees/tokenizer.js';
+import { ModuleLoadTimeError, unknownVersionAliasErrors, moduleNotFoundErrors, parseErrors, runawayRelativePathErrors, SrcRange, ModuleLoadError, projectJsonErrors, projectJsonValidationErrors, otherModuleProviderErrors, moduleLoadErrors, packageJsonValidationErrors, PackageJsonValidationError, programErrors, ProjectJsonError, unknownDependencyErrors, missingRegistryErrors, unsupportedFileTypeErrors } from './languages/errors.js';
+import { imports } from './languages/imports.js';
+import { modules, ModulePath, Module, modulePaths } from './languages/modules.js';
+import { localPackageIds, Package, PackageId, PackageJson, packageJsons, packages, PublishedPackage, publishedPackageIds } from './languages/packages.js';
+import { Project, ProjectJson, projectJsons, projects } from './languages/projects.js';
+import { makeModuleAst } from './languages/hyloa/ast/modules-ast.js';
+import { hyloaTokenizer } from './languages/hyloa/ast/tokenizer.js';
 import { exit } from './utils/exit.js';
 import { Folder, folders } from "./utils/fs.js";
 import { jsonValidationErrors } from './utils/validationErrors.js';
 
 
-const parser = new parsers(tokenizer, modulesAst);
+const parserMap = new Map([
+  [ 'hyloa', new parsers(hyloaTokenizer, makeModuleAst) ],
+]);
+
+function isExtensionSupported(ext: String | Null) {
+  return ext && ext in parserMap;
+}
 
 const runProgramDefaultOptions = {
   ignoreValidationErrors: false,
@@ -234,9 +240,13 @@ export class workspaces {
       return [ moduleSource ];
     }
     
+    const parser = parserMap.get(path.extension()!)
+    
+    if (!parser) exit('Programmer error -- tried to load a file with an unsupported extension.', path);
+    
     const moduleAst = parser.parse(moduleSource);
     
-    if (!(moduleAst instanceof modulesAst)) {
+    if (!(moduleAst instanceof makeModuleAst)) {
       // TODO handle this better in hyloa. Probs move `ParseError` to the parser.
       // Also recover from recoverable parsing errors.
       return [ new parseErrors(path, 'unknown' as Any, moduleAst) ];
@@ -246,7 +256,7 @@ export class workspaces {
   }
   
   // Assumes the package is already loaded.
-  addModule(path: ModulePath, module: Module): Void {
+  private addModule(path: ModulePath, module: Module): Void {
     if (path.packageId instanceof localPackageIds) {
       const project = this.projectMap.get(path.packageId.projectName);
       
@@ -289,6 +299,14 @@ export class workspaces {
       return [];
     }
     
+    if (!isExtensionSupported(path.extension())) {
+      const err = new unsupportedFileTypeErrors(path);
+      
+      guard(err);
+      
+      return [ err ];
+    }
+    
     const loadPackageError = await this.loadPackage(path.packageId)
     
     if (loadPackageError instanceof programErrors) {
@@ -325,8 +343,8 @@ export class workspaces {
     const allErrors: ModuleLoadTimeError[][] = await Promise.all(
       module.imports.map(
         async (imported) => {
-          const importPosition: SrcRange = imported.ast.importKeyword;
-          const importedPath = imported.importedPath;
+          const { importPosition } = imported.ast;
+          const { importedPath } = imported;
           
           // TypeScript cannot handle a switch.
           if (importedPath === imports.missingDefaultRegistry) {
@@ -387,9 +405,9 @@ export class workspaces {
   
   // Args will by type-checked against the parameters of the `entrypoints` class
   async runProgram(
-    projectName: String,
-    programName: String,
-    options: RunProgramOptions = runProgramDefaultOptions,
+    _projectName: String,
+    _programName: String,
+    _options: RunProgramOptions = runProgramDefaultOptions,
     ..._args: unknown[]
   ) {
     // TODO

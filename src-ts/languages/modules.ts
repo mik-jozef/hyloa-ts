@@ -1,12 +1,26 @@
 // @ts-ignore
 type String = string; type Null = null; type Boolean = boolean; type Number = number; type BigInt = bigint; type Symbol = symbol; type Unknown = unknown; type Never = never; type Any = any; type Void = void
 
-import { modulesAst } from '../syntax-trees/modules-ast.js';
+import { makeModuleAst } from './hyloa/ast/modules-ast.js';
 import { exit } from '../utils/exit.js';
 import { Path } from '../utils/fs.js';
 import { Import, imports } from './imports.js';
 import { LocalPackageId, PackageId, PackageJson, PublishedPackageId } from './packages.js';
 
+
+/*/
+  A package reference is a modified form of a published package
+  ID that uses a version alias instead of a version, and might
+  omit the registry in case a default registry is specified in
+  `project.json`
+/*/
+export type ParsedPath = {
+  registry: String | Null,
+  scope: String | Null,
+  name: String,
+  versionAlias: String,
+  rest: String,
+}
 
 export type LocalModulePath = ModulePathT<LocalPackageId>
 export type PublishedModulePath = ModulePathT<PublishedPackageId>
@@ -26,6 +40,10 @@ export type ModulePathT<Pid extends PackageId> = modulePaths<Pid>;
 export class modulePaths<Pid extends PackageId> {
   folderArr: String[];
   file: String | Null;
+  
+  extension(): String | Null {
+    return this.file?.substring(this.file.lastIndexOf('.') + 1) ?? null;
+  }
   
   constructor(packageId: Pid, path: String); // Path is expected to start with a slash.
   constructor(packageId: Pid, folderArr: String[], file: String | Null);
@@ -88,7 +106,7 @@ export class modules {
   imports: Import[];
   
   constructor(
-    public ast: modulesAst,
+    public ast: makeModuleAst,
     public path: ModulePath,
     packageJson: PackageJson,
   ) {

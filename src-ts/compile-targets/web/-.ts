@@ -1,4 +1,4 @@
-import { programs, projects } from "../../programs/projects";
+import { programs, projects } from "../../languages/projects";
 import { folders, paths } from "../../utils/fs";
 import { topLevelCodeEmitters } from "./code-emitters";
 import { ModuleEmitter, moduleEmitters } from "./module-compilers";

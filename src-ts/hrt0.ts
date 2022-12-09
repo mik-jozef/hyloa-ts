@@ -9,7 +9,7 @@ import { fileURLToPath } from 'url';
 import { workspaces } from "./workspaces.js"
 import { exit } from "./utils/exit.js"
 import { singleModuleProviders } from "./module-providers.js"
-import { executionContexts } from "./programs/runtime/execution-contexts.js"
+import { executionContexts } from "./languages/runtime/execution-contexts.js"
 import { Repl } from "./repls.js"
 import { folders } from "./utils/fs.js"
 

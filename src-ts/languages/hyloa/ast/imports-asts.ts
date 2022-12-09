@@ -2,7 +2,9 @@
 type String = string; type Null = null; type Boolean = boolean; type Number = number; type BigInt = bigint; type Symbol = symbol; type Unknown = unknown; type Never = never; type Any = any; type Void = void
 
 import { Caten, Match, Maybe, MergedTokens, Or, Repeat, SyntaxTreeNode as syntaxTreeNodes, Token } from "lr-parser-typescript";
-import { exit } from "../utils/exit.js";
+import { exit } from "../../../utils/exit.js";
+import { importAsts } from "../../imports.js";
+import { ParsedPath } from "../../modules.js";
 
 import { token } from "./tokenizer.js";
 
@@ -21,20 +23,6 @@ import { token } from "./tokenizer.js";
   ```
 /*/
 
-/*/
-  A package reference is a modified form of a published package
-  ID that uses a version alias instead of a version, and might
-  omit the registry in case a default registry is specified in
-  `project.json`
-/*/
-export type ParsedPath = {
-  registry: String | Null,
-  scope: String | Null,
-  name: String,
-  versionAlias: String,
-  rest: String,
-}
-
 type KebabCase = kebabCases;
 class kebabCases extends syntaxTreeNodes {
   rest!: kebabCases | null;
@@ -47,9 +35,9 @@ export type ExternalImportAst = ImportAst & { parsedPath: ParsedPath };
 // TODO proper types in the parser.
 type Raw<T> = T; // Let's cheat a little.
 
-export type ImportAst = importsAst;
-export class importsAst extends syntaxTreeNodes {
-  importKeyword!: Token<'import'>;
+export type ImportAst = hyloaImportAsts;
+export class hyloaImportAsts extends importAsts {
+  importPosition!: Token<'import'>;
   pathMergedTokens!: MergedTokens;
   
   path: string;
@@ -59,7 +47,7 @@ export class importsAst extends syntaxTreeNodes {
     return this.parsedPath === null;
   }
   
-  constructor(obj: Raw<importsAst>) {
+  constructor(obj: Raw<hyloaImportAsts>) {
     super(obj);
     
     this.path = obj.pathMergedTokens.value;
@@ -68,7 +56,7 @@ export class importsAst extends syntaxTreeNodes {
   
   // TODO fix the grammar
   static rule = new Caten(
-    new Match(false, 'importKeyword', token('import')),
+    new Match(false, 'importPosition', token('import')),
     
     new Match(false, 'pathMergedTokens',
       new Caten(

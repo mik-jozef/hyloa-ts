@@ -1,9 +1,10 @@
 // @ts-ignore
 type String = string; type Null = null; type Boolean = boolean; type Number = number; type BigInt = bigint; type Symbol = symbol; type Unknown = unknown; type Never = never; type Any = any; type Void = void
 
-import { ExternalImportAst, ImportAst } from "../syntax-trees/imports-sts";
-import { ModulePath, modulePaths } from "./modules";
-import { PackageJson } from "./packages";
+import { SyntaxTreeNode as syntaxTreeNodes } from "lr-parser-typescript";
+import { SrcRange } from "./errors.js";
+import { ModulePath, modulePaths, ParsedPath } from "./modules.js";
+import { PackageJson } from "./packages.js";
 
 
 type ImportedPath =
@@ -27,6 +28,26 @@ type UnknownDependency = typeof unknownDependency;
 
 const unknownVersionAlias = Symbol('unknown version alias');
 type UnknownVersionAlias = typeof unknownVersionAlias;
+
+
+export type ImportAst = importAsts;
+export abstract class importAsts extends syntaxTreeNodes {
+  abstract path: String;
+  abstract parsedPath: ParsedPath | Null;
+  
+  /*/
+    This serves as a temporary anchor for potential errors.
+    
+    TODO replace with specific error positions for specific
+    error types.
+  /*/
+  abstract importPosition: SrcRange;
+  
+  abstract isExternalImport(): this is ExternalImportAst;
+}
+
+export type ExternalImportAst = ImportAst & { parsedPath: ParsedPath };
+
 
 export type Import = imports;
 export class imports {

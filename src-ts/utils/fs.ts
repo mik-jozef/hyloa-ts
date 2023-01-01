@@ -1,23 +1,17 @@
-// @ts-ignore
-type String = string; type Null = null; type Boolean = boolean; type Number = number; type BigInt = bigint; type Symbol = symbol; type Unknown = unknown; type Never = never; type Any = any; type Void = void
-
 import { createReadStream, promises, ReadStream } from "fs";
 
 
-export type FileSystemError = fileSystemErrors;
-export abstract class fileSystemErrors {
+export abstract class FileSystemError {
   abstract path: Path;
 }
 
-export type FileNotFoundError = fileNotFoundErrors;
-export class fileNotFoundErrors extends fileSystemErrors {
+export class FileNotFoundError extends FileSystemError {
   constructor(
     public path: Path,
   ) { super(); }
 }
 
-export type OtherFsError = otherFsErrors;
-export class otherFsErrors extends fileSystemErrors {
+export class OtherFsError extends FileSystemError {
   constructor(
     public path: Path,
     public error: NodeJS.ErrnoException,
@@ -68,11 +62,10 @@ export type StreamReaderClass<T> = ReaderClassPrefers<T> & {
 export type FileReaderClass<T> = BufferReaderClass<T> | StreamReaderClass<T>;
 
 
-export type Path = paths;
-export class paths {
+export class Path {
   constructor(
-    public folders: String[],
-    public file: String | Null,
+    public folders: string[],
+    public file: string | null,
   ) {}
   
   toString() {
@@ -84,8 +77,7 @@ export class paths {
 // Hyloa is capability-based, it's gonna use Folder and File
 // classes, and a program will need to be given one to be able
 // to open it.
-export type Folder = folders;
-export class folders {
+export class Folder {
   constructor(
     // Should be without a trailing slash. Not part of Hyloa.
     private path: string,
@@ -93,14 +85,14 @@ export class folders {
   ) {}
   
   readFile<T>(filePath: Path, fileReader: FileReaderClass<T>): Promise<T | FileSystemError>;
-  readFile<T>(filePath: Path, fileReader: 'utf8'): Promise<String | FileSystemError>;
-  readFile<T>(filePath: Path, fileReader: Null): Promise<Buffer | FileSystemError>;
+  readFile<T>(filePath: Path, fileReader: 'utf8'): Promise<string | FileSystemError>;
+  readFile<T>(filePath: Path, fileReader: null): Promise<Buffer | FileSystemError>;
   
   async readFile<T>(
     filePath: Path,
-    fileReader: FileReaderClass<T> | 'utf8' | Null = null,
+    fileReader: FileReaderClass<T> | 'utf8' | null = null,
   ):
-    Promise<T | Buffer | String | FileSystemError>
+    Promise<T | Buffer | string | FileSystemError>
   {
     try {
       const path = this.path + filePath.toString();
@@ -123,13 +115,13 @@ export class folders {
         return (new fileReaderClass(stream)).read();
       }
     } catch (e: any) {
-      if (e.code === 'ENOENT') return new fileNotFoundErrors(filePath);
+      if (e.code === 'ENOENT') return new FileNotFoundError(filePath);
       
-      return new otherFsErrors(filePath, e);
+      return new OtherFsError(filePath, e);
     }
   }
   
-  writeFile(filePath: Path, str: String) {
+  writeFile(filePath: Path, str: string) {
     const path = this.path + filePath.toString();
     
     return promises.writeFile(path, str);

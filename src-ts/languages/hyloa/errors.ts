@@ -1,5 +1,4 @@
-import { sourceCodeErrors } from "../errors";
+import { SourceCodeError } from "../errors";
 
 
-export type HyloaError = hyloaErrors;
-export abstract class hyloaErrors extends sourceCodeErrors {}
+export abstract class HyloaError extends SourceCodeError {}

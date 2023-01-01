@@ -1,16 +1,12 @@
-// @ts-ignore
-type String = string; type Null = null; type Boolean = boolean; type Number = number; type BigInt = bigint; type Symbol = symbol; type Unknown = unknown; type Never = never; type Any = any; type Void = void
-
 import { SrcPosition, SrcPosition as srcPositions } from "lr-parser-typescript";
-import { JsonValidationError } from "../utils/validationErrors";
+import { JsonValidationError } from "../utils/json-validation-error";
 
-import { ModulePath, ParsedPath } from "./modules";
-import { PackageId } from "./packages";
+import { ModulePathAny, ParsedPath } from "./module";
+import { PackageId } from "./package";
 
 
 // TODO move to `lr-parser-typescript`
-export type SrcRange = srcRanges;
-export class srcRanges {
+export class SrcRange {
   constructor(
     public start: SrcPosition,
     public end: SrcPosition,
@@ -19,93 +15,85 @@ export class srcRanges {
 
 // type SrcRangeZero = SrcRange & { start: { i: 0 }, end: { i: 0 } };
 export const srcRangeZeros = () =>
-  new srcRanges(new srcPositions(0, 0, 0), new srcPositions(0, 0, 0));
+  new SrcRange(new srcPositions(0, 0, 0), new srcPositions(0, 0, 0));
 
 
-export type ProgramError = programErrors;
-export abstract class programErrors {
+export abstract class ProgramError {
   static isWarning = false;
   
   // TODO split into several functions? `toString` (with a default impl.), `toExtendedString`, `toShortString`
   // Also refactor so that the short error description does not
   // have to be followed by `sourceCodeErrors.sourceHighlight(this)` in every overload.
-  abstract toString(): String;
+  abstract toString(): string;
 }
 
-export type ProjectJsonError = projectJsonErrors;
-export abstract class projectJsonErrors extends programErrors {
-  abstract projectName: String;
+export abstract class ProjectJsonError extends ProgramError {
+  abstract projectName: string;
 }
 
-export type MissingProjectJson = missingProjectJsonErrors;
-export class missingProjectJsonErrors extends projectJsonErrors {
+export class MissingProjectJson extends ProjectJsonError {
   constructor(
-    public projectName: String,
+    public projectName: string,
   ) { super(); }
   
-  toString(): String {
+  toString(): string {
     return `The project ${this.projectName} is missing the file \`project.json\` (or does not exist).`;
   }
 }
 
-export type ProjectJsonValidationError = projectJsonValidationErrors;
-export class projectJsonValidationErrors extends projectJsonErrors {
+export class ProjectJsonValidationError extends ProjectJsonError {
   constructor(
-    public projectName: String,
+    public projectName: string,
     public error: JsonValidationError<never>, // TODO
   ) { super(); }
   
   // TODO be more informative.
-  toString(): String {
+  toString(): string {
     return `The project ${this.projectName}'s \`project.json\` file contains errors.`;
   }
 }
 
 // TODO rename to sth like ProjectJsonModuleLoaderError?
-export type ProjectJsonModuleProviderError = projectJsonModuleProviderErrors;
-export class projectJsonModuleProviderErrors extends projectJsonErrors {
+export class ProjectJsonModuleProviderError extends ProjectJsonError {
   constructor(
-    public projectName: String,
-    public error: Unknown,
+    public projectName: string,
+    public error: unknown,
   ) { super(); }
   
-  toString(): String {
+  toString(): string {
     return `The project ${this.projectName}'s \`project.json\` file could not be loaded.`;
   }
 }
 
-export type PackageJsonValidationError = packageJsonValidationErrors;
-export class packageJsonValidationErrors extends programErrors {
+export class PackageJsonValidationError extends ProgramError {
   constructor(
     public packageId: PackageId,
     public error: JsonValidationError<never>, // TODO
   ) { super(); }
   
   // TODO be more informative.
-  toString(): String {
+  toString(): string {
     return `TODO.`;
   }
 }
 
 // TODO this should also print a warning that the unused
 // module might be used in other unused modules.
-export type UnusedModule = unusedModuleErrors;
-export class unusedModuleErrors extends programErrors {
+export class UnusedModule extends ProgramError {
   static isWarning = true;
   
   constructor(
-    public path: ModulePath,
+    public path: ModulePathAny,
   ) { super(); }
   
-  toString(): String {
+  toString(): string {
     return 'TODO';
   }
 }
 
 
-export type SourceCodeError = sourceCodeErrors;
-export abstract class sourceCodeErrors extends programErrors {
-  abstract inModule: ModulePath;
+export abstract class SourceCodeError extends ProgramError {
+  abstract inModule: ModulePathAny;
   abstract at: SrcRange;
   
   // TODO add this to `lr-parser-typescript`.
@@ -113,19 +101,18 @@ export abstract class sourceCodeErrors extends programErrors {
     return pos.line + ':' + pos.col;
   }
   
-  static inAt(err: SourceCodeError): String {
+  static inAt(err: SourceCodeError): string {
     return 'In ' + err.inModule.toString() +
       ' at ' + err.at.toString + '\n';
   }
   
-  static sourceHighlight(_err: SourceCodeError): String {
+  static sourceHighlight(_err: SourceCodeError): string {
     // TODO
     return 'Highlighting relevant lines in the source code is not yet supported.';
   }
 }
 
-export type ModuleLoadTimeSourceCodeError = moduleLoadTimeSourceCodeErrors;
-export abstract class moduleLoadTimeSourceCodeErrors extends sourceCodeErrors {
+export abstract class ModuleLoadTimeSourceCodeError extends SourceCodeError {
   fuckTypeScript: 'fuckTypeScript0' = 'fuckTypeScript0';
 }
 
@@ -137,109 +124,103 @@ export type ModuleLoadTimeError =
 ;
 
 
-export type ParseError = parseErrors;
-export class parseErrors extends moduleLoadTimeSourceCodeErrors {
+export class ParseError extends ModuleLoadTimeSourceCodeError {
   constructor(
-    public inModule: ModulePath,
+    public inModule: ModulePathAny,
     public at: SrcRange,
-    public whatever: Unknown,
+    public whatever: unknown,
   ) { super(); }
   
-  toString(): String {
+  toString(): string {
     return (
-      sourceCodeErrors.inAt(this) +
+      SourceCodeError.inAt(this) +
       'Parsing error:\n' +
       this.whatever + '\n' +
       '\n' +
-      sourceCodeErrors.sourceHighlight(this)
+      SourceCodeError.sourceHighlight(this)
     );
   }
 }
 
-export type MissingRegistry = missingRegistryErrors;
-export class missingRegistryErrors extends moduleLoadTimeSourceCodeErrors {
+export class MissingRegistry extends ModuleLoadTimeSourceCodeError {
   constructor(
-    public inModule: ModulePath,
+    public inModule: ModulePathAny,
     public at: SrcRange,
     public dependency: ParsedPath,
   ) { super(); }
   
-  toString(): String {
+  toString(): string {
     return (
-      sourceCodeErrors.inAt(this) +
+      SourceCodeError.inAt(this) +
       `TODO\n` +
       '\n' +
-      sourceCodeErrors.sourceHighlight(this)
+      SourceCodeError.sourceHighlight(this)
     );
   }
 }
 
-export type UnknownDependency = unknownDependencyErrors;
-export class unknownDependencyErrors extends moduleLoadTimeSourceCodeErrors {
+export class UnknownDependency extends ModuleLoadTimeSourceCodeError {
   constructor(
-    public inModule: ModulePath,
+    public inModule: ModulePathAny,
     public at: SrcRange,
     public dependency: ParsedPath,
   ) { super(); }
   
-  toString(): String {
+  toString(): string {
     return (
-      sourceCodeErrors.inAt(this) +
+      SourceCodeError.inAt(this) +
       `TODO\n` +
       '\n' +
-      sourceCodeErrors.sourceHighlight(this)
+      SourceCodeError.sourceHighlight(this)
     );
   }
 }
 
-export type UnknownVersionAlias = unknownVersionAliasErrors;
-export class unknownVersionAliasErrors extends moduleLoadTimeSourceCodeErrors {
+export class UnknownVersionAlias extends ModuleLoadTimeSourceCodeError {
   constructor(
-    public inModule: ModulePath,
+    public inModule: ModulePathAny,
     public at: SrcRange,
-    public alias: String,
+    public alias: string,
   ) { super(); }
   
-  toString(): String {
+  toString(): string {
     return (
-      sourceCodeErrors.inAt(this) +
+      SourceCodeError.inAt(this) +
       `Version alias: ${this.alias} does not exist. '\n` +
       '\n' +
-      sourceCodeErrors.sourceHighlight(this)
+      SourceCodeError.sourceHighlight(this)
     );
   }
 }
 
-export type ImportReference = [ ModulePath, SrcRange ];
+export type ImportReference = [ ModulePathAny, SrcRange ];
 
-export type ModuleLoadError = moduleLoadErrors;
-export abstract class moduleLoadErrors extends programErrors {
+export abstract class ModuleLoadError extends ProgramError {
   abstract importReferences: ImportReference[];
   
-  abstract inModule: ModulePath;
+  abstract inModule: ModulePathAny;
   
-  static inNoAt(err: ModuleLoadError): String {
+  static inNoAt(err: ModuleLoadError): string {
     return 'In ' + err.inModule.toString() + '\n';
   }
 }
 
-export type ModuleNotFound = moduleNotFoundErrors;
-export class moduleNotFoundErrors extends moduleLoadErrors {
+export class ModuleNotFound extends ModuleLoadError {
   importReferences: ImportReference[];
   
   constructor(
     // The path of the file that could not be imported.
-    public inModule: ModulePath,
-    importReference: ImportReference | Null = null,
+    public inModule: ModulePathAny,
+    importReference: ImportReference | null = null,
   ) {
     super();
     
     this.importReferences = importReference ? [ importReference ] : [];
   }
   
-  toString(): String {
+  toString(): string {
     return (
-      moduleLoadErrors.inNoAt(this) +
+      ModuleLoadError.inNoAt(this) +
       'No module exists under the path:' + this.inModule + '.'
     );
   }
@@ -249,70 +230,67 @@ export class moduleNotFoundErrors extends moduleLoadErrors {
   This error is only reported at the path of the imported file,
   with srcRange "0:0".
 /*/
-export type OtherModuleProviderError = otherModuleProviderErrors;
-export class otherModuleProviderErrors extends moduleLoadErrors {
+export class OtherModuleProviderError extends ModuleLoadError {
   importReferences: ImportReference[];
   
   at = srcRangeZeros();
   
   constructor(
     // The path of the file that could not be imported.
-    public inModule: ModulePath,
-    public error: Unknown,
-    importReference: ImportReference | Null = null,
+    public inModule: ModulePathAny,
+    public error: unknown,
+    importReference: ImportReference | null = null,
   ) {
     super();
     
     this.importReferences = importReference ? [ importReference ] : [];
   }
   
-  toString(): String {
+  toString(): string {
     return (
-      sourceCodeErrors.inAt(this) +
+      SourceCodeError.inAt(this) +
       'An error occured while loading the content of' + this.inModule + '\n' +
       '\n' +
-      sourceCodeErrors.sourceHighlight(this)
+      SourceCodeError.sourceHighlight(this)
     );
   }
 }
 
-export type UnsupportedFileType = unsupportedFileTypeErrors;
-export class unsupportedFileTypeErrors extends moduleLoadErrors {
+export class UnsupportedFileType extends ModuleLoadError {
   importReferences: ImportReference[];
   
   constructor(
     // The path of the file that could not be imported.
-    public inModule: ModulePath,
-    importReference: ImportReference | Null = null,
+    public inModule: ModulePathAny,
+    importReference: ImportReference | null = null,
   ) {
     super();
     
     this.importReferences = importReference ? [ importReference ] : [];
   }
   
-  toString(): String {
+  toString(): string {
     return (
-      moduleLoadErrors.inNoAt(this)
+      ModuleLoadError.inNoAt(this)
       + `The file "${this.inModule} has an unsupported extension.`
       + 'Did you mean to use a file loader?'
     );
   }
 }
 
-export type RunawayRelativePath = runawayRelativePathErrors;
-export class runawayRelativePathErrors extends moduleLoadTimeSourceCodeErrors {
+export class RunawayRelativePath extends ModuleLoadTimeSourceCodeError {
   constructor(
-    public inModule: ModulePath,
+    public inModule: ModulePathAny,
     public at: SrcRange,
-    public path: String,
+    public path: string,
   ) { super(); }
   
-  toString(): String {
+  toString(): string {
     return (
-      sourceCodeErrors.inAt(this) +
+      SourceCodeError.inAt(this) +
       'A path musn\'t escape the root folder:' + this.path + '\n' +
       '\n' +
-      sourceCodeErrors.sourceHighlight(this)
+      SourceCodeError.sourceHighlight(this)
     );
   }
 }

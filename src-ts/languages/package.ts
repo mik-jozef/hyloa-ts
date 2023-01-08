@@ -11,12 +11,23 @@ export class Version {
   constructor(major: string, minor: string, patch: string);
   
   constructor(
+    /*/
+      If minor and major are not provided, this is expected to contain
+      the whole version (d.d.d).
+    /*/
     public major: string,
     public minor?: string,
     public patch?: string,
   ) {
     if (minor === undefined) {
-      [ this.major, this.minor, this.patch ] = major.split('.');
+      const versionParts = major.split('.');
+      
+      if (versionParts.length !== 3) {
+        throw new Error('Programmer error -- version must be d.d.d');
+      }
+      
+      [ this.major, this.minor, this.patch ] =
+        versionParts as [ string, string, string ];
     }
   }
   

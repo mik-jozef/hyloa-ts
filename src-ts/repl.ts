@@ -34,9 +34,7 @@ export class Repl {
       // TODO
       
       exit('REPL is not implemented yet.\n' +
-        'Expected usage: provide the code to be executed, in a single argument.\n' +
-        '\n' +
-        'Example: npm run-script --silent run "import X; let x = 42;"'
+        'Try `hyloa --help`'
       );
     }
   }

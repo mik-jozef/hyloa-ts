@@ -105,6 +105,9 @@ export class LyoImportAst extends ImportAst {
     } =
       match.groups!;
     
+    if (!name) throw new Error('Programmmer error -- name is mandatory');
+    if (!rest) throw new Error('Programmmer error -- rest is mandatory');
+    
     return { registry, scope, name, versionAlias, rest };
   }
 }

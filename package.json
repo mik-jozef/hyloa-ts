@@ -4,10 +4,15 @@
   "main": "out/hlt0.js",
   "scripts": {
     "build": "rm -r ./local/out \n tsc",
+    "command-create": "node ./scripts/command-create.js",
+    "command-delete": "node ./scripts/command-delete.js",
     "debug-brk": "node --inspect-brk ./local/out/hrt0.js",
     "debug": "node --inspect ./local/out/hrt0.js",
     "run": "node ./local/out/hrt0.js",
     "watch": "rm -r ./local/out \n tsc --watch"
+  },
+  "bin": {
+    "hyloa": "./local/out/hrt0.js"
   },
   "devDependencies": {
     "@types/node": "^12.20.55",

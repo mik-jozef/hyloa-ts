@@ -63,7 +63,10 @@ export class ModulePath<Pid extends PackageId> {
       } else {
         this.folderArr = pathParts;
         
-        this.file = pathParts[pathParts.length - 1].includes('.')
+        // Not undefined bc pathParts.length !== 0.
+        const last = pathParts[pathParts.length - 1]!;
+        
+        this.file = last.includes('.')
           ? pathParts.pop()! : null;
       }
     }

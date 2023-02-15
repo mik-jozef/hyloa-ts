@@ -6,6 +6,8 @@
   accessible without an explicitly given reference, eg. files.
 /*/
 
+import { mkdirSync } from 'fs';
+
 import { Workspace } from "./workspace.js"
 import { exit } from "./utils/exit.js"
 import { ExecutionContext } from "./languages/runtime/execution-context.js"
@@ -36,7 +38,7 @@ function createWorkspace() {
 }
 
 function compileCommandFn() {
-  if (args.length !== 4) exit('Expected four args. TODO usage: ...');
+  if (args.length !== 4) exit('Expected four args. Try `hyloa help compile`.');
   
   const [ outFolderPath, projectName, packageName, targetName ] =
     args as [ string, string, string, string ];
@@ -52,8 +54,32 @@ function compileCommandFn() {
   );
 }
 
+function initWorkspace(path: string): never {
+  mkdirSync(path + '/projects', { recursive: true });
+  mkdirSync(path + '/lib', { recursive: true });
+  
+  exit('Created an empty workspace.');
+}
+
+async function initProject(): never {}
+
+function initCommandFn() {
+  const [ subcommand ] = args;
+  
+  if (subcommand === undefined) {
+    exit('Expected exactly one argument. Try `hyloa help init`.');
+  }
+  
+  switch (subcommand) {
+    case 'workspace': initWorkspace();
+    case 'project': initProject();
+    default:
+      exit(`Subcommand must be either "workspace" or "project", not "${subcommand}".`);
+  }
+}
+
 function runCommandFn() {
-  if (args.length < 2) exit('Expected at least two args. TODO usage: ...');
+  if (args.length < 2) exit('Expected at least two args. Try `hyloa help run`.');
   
   const [ projectName, packageName, ...programArgs ] =
     args as [ string, string, ...string[] ];
@@ -87,6 +113,18 @@ const commands = fixCommandMapType({
     description: ''
       + 'Displays help for a particular [command]. If [command] is '
       + 'not provided, prints the default help message.\n'
+      ,
+  },
+  init: {
+    fn: initCommandFn,
+    args: 'hyloa init ("workspace" | "project")',
+    description: ''
+      + '`init workspace` makes the current (empty) folder into a workspace.'
+      + '\n'
+      + '`init project` interactively creates a new empty project. '
+      + 'The command assumes the current folder is a workspace.\n'
+      + '\n'
+      + 'For more about the folder structure used by Hyloa, TODO link to docs\n'
       ,
   },
   run: {
@@ -138,7 +176,7 @@ ${Object.values(commands)
 }
 You can use the "help" command to get more details about a particular command.
 
-Hyloa SDK version: TODO
+Hyloa version: TODO
 Official website: https://TODO.com`);
 }
 

@@ -2,9 +2,9 @@ import { Caten, IdentifierToken, Match, Maybe, Or, Repeat, SyntaxTreeNode, Token
 import { token } from "./tokenizer.js";
 
 
-let matchSetEnumeration = new Match(false, 'value', null!);
-let matchLetDeclaration = new Match(false, 'value', null!);
-let matchQuantifier = new Match(false, 'value', null!);
+let matchValueSetEnumeration = new Match(false, 'value', null!);
+let matchValueLetDeclaration = new Match(false, 'value', null!);
+let matchValueQuantifier = new Match(false, 'value', null!);
 
 export type BottomRungOrLower =
   | IdentifierToken
@@ -16,7 +16,7 @@ export class BottomRung extends SyntaxTreeNode {
   
   static rule = new Or(
     token('identifier'),
-    matchSetEnumeration,
+    matchValueSetEnumeration,
   );
 }
 
@@ -29,7 +29,7 @@ export class ExprRung extends SyntaxTreeNode {
   static hidden = true;
   
   static rule = new Or(
-    matchLetDeclaration,
+    matchValueLetDeclaration,
     new Match(false, 'value', BottomRung),
   );
 }
@@ -96,6 +96,6 @@ export class Quantifier extends SyntaxTreeNode {
   );
 }
 
-matchSetEnumeration.match = SetEnumeration;
-matchLetDeclaration.match = LetDeclaration;
-matchQuantifier.match = Quantifier;
+matchValueSetEnumeration.match = SetEnumeration;
+matchValueLetDeclaration.match = LetDeclaration;
+matchValueQuantifier.match = Quantifier;

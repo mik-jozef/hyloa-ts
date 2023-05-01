@@ -12,7 +12,7 @@ export class Version {
   
   constructor(
     /*/
-      If minor and major are not provided, this is expected to contain
+      If minor and patch are not provided, this is expected to contain
       the whole version (d.d.d).
     /*/
     public major: string,
@@ -178,15 +178,15 @@ export class PublishedPackageId extends PackageId {
     
     // An alias for a (kebabcased, subdomains allowed) domain
     // without protocol or port (eg. `pkg.my-registry.com`).
-    Registry = string
+    RegistryUrl = string
     
     PackageSettings = {
       defaultRegistry: KebabCase | null,
-      registries: Record<KebabCase | '', Registry>, // TODO make sure all registries are unique
+      registries: Record<KebabCase, RegistryUrl>,
       
       // In case this is a record, the publishing command should
       // require the name of the registry.
-      publishTo: Record<KebabCase, PublishTo>,
+      publishTo: KebabCase | null | Record<KebabCase, PublishTo>,
       
       targets: Record<KebabCase, Target>,
       

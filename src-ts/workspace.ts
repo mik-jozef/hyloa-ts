@@ -22,7 +22,7 @@
     the project.
 /*/
 
-import { Parser as parsers } from 'lr-parser-typescript';
+import { Parser } from 'lr-parser-typescript';
 import { dirname } from 'path';
 import { fileURLToPath } from 'url';
 
@@ -46,9 +46,11 @@ const __dirname = dirname(__filename);
 const parserTablePath = (lang: string) => __dirname + `/../../src-ts/languages/${lang}/parser-tables.json`;
 
 const parserMap = {
-  hyloa: new parsers(hyloaTokenizer, HyloaModuleAst, parserTablePath('hyloa'), true),
-  // lyo: new parsers(lyoTokenizer, LyoModuleAst, parserTablePath('lyo'), true),
+  hyloa: new Parser(hyloaTokenizer, HyloaModuleAst, parserTablePath('hyloa'), true),
+  lyo: new Parser(lyoTokenizer, LyoModuleAst, parserTablePath('lyo'), true),
 };
+
+type ParserInMap = typeof parserMap[keyof typeof parserMap];
 
 function isExtensionSupported(ext: string | null) {
   return ext && ext in parserMap;
@@ -107,8 +109,14 @@ export class Workspace {
       : moduleProvider;
   }
 
+  // When this function is called with a certain argument
+  // the zeroth time, it returns a promise's resolve function,
+  // and saves the promise to `discoveredPathMap`.
+  // On subsequent calls with arguments that stringify to the
+  // same string, the promise is returned.
   private loadPathGuard(path: ModulePathAny):
-    Promise<ModuleLoadError | null> | LoadingResultFn {
+    Promise<ModuleLoadError | null> | LoadingResultFn
+  {
     const pathString = path.toString();
     const promise = this.discoveredPathMap.get(pathString);
 
@@ -240,7 +248,10 @@ export class Workspace {
       return [moduleSource];
     }
 
-    const parser = parserMap[path.extension() as keyof typeof parserMap];
+    const parser: ParserInMap | undefined =
+      // "Type 'null' cannot be used as an index type.ts(2538)"
+      // !!ts-expect-error It fucking can.
+      parserMap[path.extension() as keyof typeof parserMap];
 
     if (!parser) exit('Programmer error -- tried to load a file with an unsupported extension.', path);
 
@@ -282,8 +293,8 @@ export class Workspace {
   // If called multiple times, the subsequent calls will return an empty array.
   async loadPath(
     path: ModulePathAny,
-    loadedFrom: ModulePathAny | null,
-    loadedAt: SrcRange | null,
+    loadedFrom: ModulePathAny | null = null,
+    loadedAt: SrcRange | null = null,
   ):
     Promise<ModuleLoadTimeError[]> {
     const guard = this.loadPathGuard(path);
@@ -345,32 +356,26 @@ export class Workspace {
           const { importPosition } = imported.ast;
           const { importedPath } = imported;
 
-          // TypeScript cannot handle a switch.
-          if (importedPath === Import.missingDefaultRegistry) {
-            return [
-              new MissingRegistry(module.path, importPosition, imported.ast.parsedPath!),
-            ];
+          switch (importedPath) {
+            case Import.missingDefaultRegistry:
+              return [
+                new MissingRegistry(module.path, importPosition, imported.ast.parsedPath!),
+              ];
+            case Import.runawayRelativePath:
+              return [
+                new RunawayRelativePath(module.path, importPosition, imported.ast.path),
+              ];
+            case Import.unknownDependency:
+              return [
+                new UnknownDependency(module.path, importPosition, imported.ast.parsedPath!),
+              ];
+            case Import.unknownVersionAlias:
+              return [
+                new UnknownVersionAlias(module.path, importPosition, imported.ast.parsedPath!.versionAlias),
+              ];
+            default:
+              return this.loadPath(importedPath, module.path, importPosition);
           }
-
-          if (importedPath === Import.runawayRelativePath) {
-            return [
-              new RunawayRelativePath(module.path, importPosition, imported.ast.path),
-            ];
-          }
-
-          if (importedPath === Import.unknownDependency) {
-            return [
-              new UnknownDependency(module.path, importPosition, imported.ast.parsedPath!),
-            ];
-          }
-
-          if (importedPath === Import.unknownVersionAlias) {
-            return [
-              new UnknownVersionAlias(module.path, importPosition, imported.ast.parsedPath!.versionAlias),
-            ];
-          }
-
-          return this.loadPath(importedPath, module.path, importPosition);
         },
       ),
     );

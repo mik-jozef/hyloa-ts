@@ -9,7 +9,7 @@ import { LocalPackage } from "./package";
   
   ```
     ProjectSettings = {
-      registries: Record<KebabCase | '', string>,
+      registries: Record<KebabCase, Url>,
       defaultRegistry: KebabCase | null,
     }
   ```

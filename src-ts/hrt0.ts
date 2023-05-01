@@ -6,13 +6,15 @@
   accessible without an explicitly given reference, eg. files.
 /*/
 
-import { mkdirSync } from 'fs';
+import { promises } from 'fs';
+import * as prompts from 'prompts';
 
-import { Workspace } from "./workspace.js"
-import { exit } from "./utils/exit.js"
-import { ExecutionContext } from "./languages/runtime/execution-context.js"
-import { Repl } from "./repl.js"
-import { Folder } from "./utils/fs.js"
+import { Workspace } from './workspace.js'
+import { exit } from './utils/exit.js'
+import { ExecutionContext } from './languages/runtime/execution-context.js'
+import { Repl } from './repl.js'
+import { Folder } from './utils/fs.js'
+import { isKebabName } from './utils/is-kebab-name.js';
 
 
 /*/
@@ -27,6 +29,7 @@ import { Folder } from "./utils/fs.js"
 /*/
 
 const [ , commandName, subcommandName = null, ...args ] = process.argv
+const cwd = process.cwd();
 
 const commandNames: unknown[] = [ 'hyloa', 'hyloa-live' ];
 
@@ -60,15 +63,79 @@ function compileCommandFn() {
   );
 }
 
-function initWorkspace(path: string): never {
-  mkdirSync(path + '/projects', { recursive: true });
-  mkdirSync(path + '/programs', { recursive: true });
-  mkdirSync(path + '/lib', { recursive: true });
+async function initWorkspace(): Promise<never> {
+  await Promise.all([
+    promises.mkdir(cwd + '/projects', { recursive: true }),
+    promises.mkdir(cwd + '/programs', { recursive: true }),
+    promises.mkdir(cwd + '/lib', { recursive: true }),
+  ]);
   
   exit('Created an empty workspace.');
 }
 
-async function initProject(): never {}
+async function initPackage(projectName: string): Promise<string> {
+  const { packageName } = await prompts([
+    {
+      type: 'text',
+      name: 'packageName',
+      validate(value) {
+        return isKebabName(value) || 'A package name must be kebab-cased and at least 3 characters long.';
+      }
+    },
+  ]);
+  
+  await promises.writeFile(`${cwd}/projects/${projectName}/${packageName}/package.json`,
+    JSON.stringify({
+      defaultRegistry: null,
+      registries: {},
+      
+      publishTo: null,
+      
+      targets: {},
+      
+      dependencies: {},
+      devDependencies: {},
+    }, null, 2),
+  );
+  
+  return packageName;
+}
+
+async function initProject(): Promise<void> {
+  const { projectName } = await prompts([
+    {
+      type: 'text',
+      name: 'projectName',
+      message: 'Project name:',
+      validate(value) {
+        return isKebabName(value) || 'A project name must be kebab-cased and at least 3 characters long.';
+      }
+    },
+  ]);
+  
+  promises.mkdir(cwd + '/projects/' + projectName, { recursive: true }),
+  
+  await promises.writeFile(`${cwd}/projects/${projectName}/project.json`,
+    JSON.stringify({
+      registries: {},
+      defaultRegistry: null,
+    }, null, 2),
+  );
+  
+  console.log('Created an empty project. Let\'s create a package inside it.');
+  
+  for (let createPackage = true; createPackage;) {
+    const packageName = await initPackage(projectName);
+    
+    ({ createPackage } = await prompts([
+      {
+        type: 'confirm',
+        name: 'createPackage',
+        message: `Created the package ${packageName}. Create another package?`,
+      }
+    ]));
+  }
+}
 
 function initCommandFn() {
   const [ subcommand ] = args;
@@ -79,7 +146,7 @@ function initCommandFn() {
   
   switch (subcommand) {
     case 'workspace': initWorkspace();
-    case 'project': initProject();
+    case 'project': initProject(); break;
     default:
       exit(`Subcommand must be either "workspace" or "project", not "${subcommand}".`);
   }

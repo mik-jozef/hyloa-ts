@@ -16,11 +16,13 @@
   },
   "devDependencies": {
     "@types/node": "^12.20.55",
+    "@types/prompts": "^2.4.4",
     "typescript": "^5.0.4"
   },
   "type": "module",
   "dependencies": {
     "case": "^1.6.3",
-    "lr-parser-typescript": "^0.1.0"
+    "lr-parser-typescript": "^0.1.0",
+    "prompts": "^2.4.2"
   }
 }

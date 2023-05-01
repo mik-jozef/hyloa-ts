@@ -1,3 +1,7 @@
+/*/
+  This file, when executed, undoes the actions of `command-create`.
+/*/
+
 import { unlinkSync } from 'fs';
 import { homedir as getHomeFolder } from 'os';
 

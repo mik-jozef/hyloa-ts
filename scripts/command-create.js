@@ -1,3 +1,11 @@
+/*/
+  This file, when executed, creates the command `hyloa-live`,
+  which allows one to run the code built in this repo.
+  
+  `hyloa-live` serves for debugging, and removes the need
+  for installation of (a published version of) `hyloa`.
+/*/
+
 import { mkdirSync, writeFileSync } from 'fs';
 import { dirname } from 'path';
 import { homedir as getHomeFolder } from 'os';

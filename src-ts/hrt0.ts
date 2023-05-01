@@ -18,7 +18,7 @@ import { Folder } from "./utils/fs.js"
 /*/
   So far, these usages are planned:
   `hyloa` -- Opens REPL
-  `hyloa < "// A hyloa program executed in REPL\n[...]"`
+  `hyloa < "// A hyloa program executed in REPL\nlet x := [...]"`
   `hyloa compile outFolderPath projectName packageName targetName`
   `hyloa run projectName packageName ...args`
   `hyloa create workspace|project|package`
@@ -26,7 +26,13 @@ import { Folder } from "./utils/fs.js"
   TODO what about the arguments? Eg. `@file(../fs/path)`?
 /*/
 
-const [ ,, commandStr = null, ...args ] = process.argv
+const [ , commandName, subcommandName = null, ...args ] = process.argv
+
+const commandNames: unknown[] = [ 'hyloa', 'hyloa-live' ];
+
+if (!commandNames.includes(commandName)) {
+  exit('The command name must be either "hyloa" or "hyloa-live".', commandName);
+}
 
 function createWorkspace() {
   return new Workspace(
@@ -56,6 +62,7 @@ function compileCommandFn() {
 
 function initWorkspace(path: string): never {
   mkdirSync(path + '/projects', { recursive: true });
+  mkdirSync(path + '/programs', { recursive: true });
   mkdirSync(path + '/lib', { recursive: true });
   
   exit('Created an empty workspace.');
@@ -136,12 +143,12 @@ const commands = fixCommandMapType({
   '--help': { fn: helpCommandFn, args: null, description: null },
 });
 
-const commandNames = Object.keys(commands)
+const subcommandNames = Object.keys(commands)
   .filter(name => !name.startsWith('-'))
 ;
 
 function helpCommandFn() {
-  if (commandStr !== 'help' && args.length !== 0) {
+  if (subcommandName !== 'help' && args.length !== 0) {
     exit('Unexpected arguments:', args);
   }
   
@@ -155,7 +162,7 @@ function helpCommandFn() {
     
     if (!command) {
       exit(`Unknown command "${commandName}".\n`
-        + `Available commands: ${commandNames.join(', ')}.`);
+        + `Available commands: ${subcommandNames.join(', ')}.`);
     }
     
     exit(command.args + '\n\n' + command.description);
@@ -180,7 +187,7 @@ Hyloa version: TODO
 Official website: https://TODO.com`);
 }
 
-if (commandStr === null) {
+if (subcommandName === null) {
   // TODO make sure `hyloa < 'script.hyloa'` works.
   new Repl(process.stdin, process.stdout, {
     executionContext: new ExecutionContext(), // TODO default variables like fs, Hyloa.version, etc
@@ -190,10 +197,10 @@ if (commandStr === null) {
   process.exit();
 }
 
-const command = commands[commandStr];
+const command = commands[subcommandName];
 
 if (command === undefined) {
-  exit(`Unknown command: "${commandStr}". Try \`hyloa --help\`.`);
+  exit(`Unknown command: "${subcommandName}". Try \`hyloa --help\`.`);
 }
 
 command.fn();

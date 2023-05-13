@@ -1,9 +1,9 @@
-import * as process from 'process'
+import { exit as nodeExit } from 'process';
 
 export function exit(message: string, ...rest: unknown[]): never {
   console.log(message, ...rest);
   
-  process.exit();
+  nodeExit();
 }
 
 export async function fuckThrow<T>(fn: () => T):

@@ -46,8 +46,8 @@ const __dirname = dirname(__filename);
 const parserTablePath = (lang: string) => __dirname + `/../../src-ts/languages/${lang}/parser-tables.json`;
 
 const parserMap = {
-  hyloa: new Parser(hyloaTokenizer, HyloaModuleAst, parserTablePath('hyloa'), true),
-  lyo: new Parser(lyoTokenizer, LyoModuleAst, parserTablePath('lyo'), true),
+  hyloa: new Parser(hyloaTokenizer, HyloaModuleAst, parserTablePath('hyloa')),
+  lyo: new Parser(lyoTokenizer, LyoModuleAst, parserTablePath('lyo')),
 };
 
 type ParserInMap = typeof parserMap[keyof typeof parserMap];

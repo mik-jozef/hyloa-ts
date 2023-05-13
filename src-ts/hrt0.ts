@@ -31,9 +31,9 @@ import { isKebabName } from './utils/is-kebab-name.js';
 const [ , commandName, subcommandName = null, ...args ] = process.argv
 const cwd = process.cwd();
 
-const commandNames: unknown[] = [ 'hyloa', 'hyloa-live' ];
+const allowedCommandNames = [ 'hyloa', 'hyloa-live' ];
 
-if (!commandNames.includes(commandName)) {
+if (!allowedCommandNames.some(name => commandName?.endsWith(name))) {
   exit('The command name must be either "hyloa" or "hyloa-live".', commandName);
 }
 
@@ -256,18 +256,19 @@ Official website: https://TODO.com`);
 
 if (subcommandName === null) {
   // TODO make sure `hyloa < 'script.hyloa'` works.
-  new Repl(process.stdin, process.stdout, {
-    executionContext: new ExecutionContext(), // TODO default variables like fs, Hyloa.version, etc
+  const repl = new Repl(process.stdin, process.stdout);
+  
+  repl.loop({
+    // TODO default variables like fs, Hyloa.version, etc
+    executionContext: new ExecutionContext(),
     printPrompts: !!process.stdin.isTTY,
   });
-  
-  process.exit();
+} else {
+  const command = commands[subcommandName];
+
+  if (command === undefined) {
+    exit(`Unknown command: "${subcommandName}". Try \`hyloa --help\`.`);
+  }
+
+  command.fn();
 }
-
-const command = commands[subcommandName];
-
-if (command === undefined) {
-  exit(`Unknown command: "${subcommandName}". Try \`hyloa --help\`.`);
-}
-
-command.fn();

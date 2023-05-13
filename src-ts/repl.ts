@@ -1,4 +1,5 @@
 import { ReadStream, WriteStream } from "tty";
+import { createInterface } from "readline";
 
 import { Workspace } from "./workspace.js";
 import { exit } from "./utils/exit.js";
@@ -17,20 +18,19 @@ export class Repl {
   constructor(
     private inStream: ReadStream,
     private outStream: WriteStream,
-    options:
-      ReplOptions,
-  ) {
-    this.loop(options);
-  }
+  ) {}
   
   async loop({ executionContext: _TODO, printPrompts }: ReplOptions) {
-    this.inStream.setEncoding('utf8');
+    const reader = createInterface({
+      input: this.inStream,
+      output: this.outStream,
+    })
     
     printPrompts && this.outStream.write(
       'Hyloa REPL (experimental and in development). Ctrl + Enter to evaluate\n> ',
     );
     
-    for await (const _input of this.inStream) {
+    for await (const _input of reader) {
       // TODO
       
       exit('REPL is not implemented yet.\n' +

@@ -283,7 +283,7 @@ export class ProcedureCall extends SyntaxTreeNode {
   static rule = new Caten(
     new Match(false, 'procedure', BottomRung),
     token('('),
-    new Repeat(new Match(true, 'elements', ExprRung), {
+    new Repeat(new Match(true, 'args', ExprRung), {
       delimiter: token(','),
       trailingDelimiter: true,
     }),

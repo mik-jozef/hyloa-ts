@@ -47,8 +47,7 @@ export class SetEnumeration extends SyntaxTreeNode {
           new Match(true, 'elements', ExprRung),
           token(','),
         ),
-        new Caten(),
-        1
+        { lowerBound: 1 },
       ),
       token(','),
     ),

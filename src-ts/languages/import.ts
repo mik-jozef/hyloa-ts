@@ -37,7 +37,7 @@ export abstract class ImportAst extends SyntaxTreeNode {
     TODO replace with specific error positions for specific
     error types.
   /*/
-  abstract importPosition: SrcRange;
+  abstract importKeyword: SrcRange;
   
   abstract isExternalImport(): this is ExternalImportAst;
 }

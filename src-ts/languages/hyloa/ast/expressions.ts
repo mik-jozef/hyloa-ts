@@ -1,15 +1,15 @@
-import { Caten, Match, Or, Repeat, SyntaxTreeNode } from "lr-parser-typescript";
+import { Caten, IdentifierToken, Match, Maybe, Or, Repeat, SyntaxTreeNode } from "lr-parser-typescript";
 
 import { ClassLiteral, matchTypeExprRung as matchTypeExprRung0 } from "./class-literal.js";
-import { LetDeclaration, matchTypeExprRung as matchTypeExprRung1 } from "./let-declaration.js";
+import {
+  LetDeclaration,
+  matchTypeExprRung as matchTypeExprRung1,
+  matchBodyExprRung,
+  matchParamsExprRung,
+} from "./let-declaration.js";
 import { token } from "./tokenizer.js";
+import { TokenKind } from "lr-parser-typescript/local/out/tokenizer.js";
 
-
-/*/
-  TODO variable assignment?:
-  - `<<` assigns without any dereference,
-  - `<<*` or `<<:` dereferences once and assigns (calls `.assign`)
-/*/
 
 const matchValueClassLiteral = new Match(false, 'value', null!);
 const matchValueObjectLiteral = new Match(false, 'value', null!);
@@ -28,10 +28,18 @@ const matchValueComparison = new Match(false, 'value', null!);
 const matchValueIntersection = new Match(false, 'value', null!);
 const matchValueUnion = new Match(false, 'value', null!);
 const matchValueConditional = new Match(false, 'value', null!);
+const matchValueAssignment = new Match(false, 'value', null!);
+const matchValueReturn = new Match(false, 'value', null!);
+const matchValueUniversalQuantifer = new Match(false, 'value', null!);
+const matchValueExistentialQuantifier = new Match(false, 'value', null!);
 const matchValueExprRung = new Match(false, 'value', null!);
 
 export class StringLiteral extends SyntaxTreeNode {
   static rule = token('text');
+}
+
+export class NumberLiteral extends SyntaxTreeNode {
+  static rule = token('number');
 }
 
 export class TextLiteral extends SyntaxTreeNode {
@@ -44,10 +52,11 @@ type BottomExprs =
   | ArrayLiteral
   | StringLiteral // Unformatted utf-8 string.
   | TextLiteral // Markdown (or simillarly) formatted text.
+  | NumberLiteral
+  | IdentifierToken
   | ProcedureCall
   | MemberAccess
   | TypeArguments
-  | LetDeclaration
 ;
 
 export class BottomRung extends SyntaxTreeNode {
@@ -59,15 +68,14 @@ export class BottomRung extends SyntaxTreeNode {
     matchValueArrayLiteral,
     new Match(false, 'value', StringLiteral),
     new Match(false, 'value', TextLiteral),
+    new Match(false, 'value', NumberLiteral),
+    new Match(false, 'value', token('identifier')),
     matchValueProcedureCall,
     matchValueMemberAccess,
     matchValueTypeArguments,
     new Caten(
       token('('),
-      new Or(
-        new Match(false, 'value', LetDeclaration),
-        matchValueExprRung,
-      ),
+      matchValueExprRung,
       token(')'),
     ),
   )
@@ -177,16 +185,29 @@ export class ConditionalRung extends SyntaxTreeNode {
   
   static rule = new Or(
     matchValueConditional,
+    matchValueAssignment,
     new Match(false, 'value', UnionRung),
   );
 }
 
-export type Expr = ConditionalOrLower;
+export type Expr =
+  | Return
+  | UniversalQuantifier
+  | ExistentialQuantifier
+  | ConditionalOrLower
+  | LetDeclaration
+;
 
 export class ExprRung extends SyntaxTreeNode {
   static hidden = true;
   
-  static rule = new Match(false, 'value', ConditionalRung);
+  static rule = new Or(
+    matchValueReturn,
+    matchValueUniversalQuantifer,
+    matchValueExistentialQuantifier,
+    new Match(false, 'value', LetDeclaration),
+    new Match(false, 'value', ConditionalRung),
+  );
 }
 
 // End of the ladder.
@@ -218,68 +239,126 @@ export class Await extends SyntaxTreeNode {
   );
 }
 
+class ObjectProperty extends SyntaxTreeNode {
+  name!: IdentifierToken;
+  value!: Expr;
+  
+  static rule = new Caten(
+    new Match(false, 'name', token('identifier')),
+    token(':'),
+    new Match(false, 'value', ExprRung),
+  );
+}
 
 export class ObjectLiteral extends SyntaxTreeNode {
-  static rule = new Or(); // TODO
+  properties!: ObjectProperty;
+  
+  static rule = new Caten(
+    token('{'),
+    new Repeat(new Match(true, 'properties', ObjectProperty), {
+      delimiter: token(','),
+      trailingDelimiter: true,
+    }),
+    token('}'),
+  );
 }
 
 export class ArrayLiteral extends SyntaxTreeNode {
-  static rule = new Or(); // TODO
+  elements!: Expr;
+  
+  static rule = new Caten(
+    token('['),
+    new Repeat(new Match(true, 'elements', ExprRung), {
+      delimiter: token(','),
+      trailingDelimiter: true,
+    }),
+    token(']'),
+  );
 }
 
 export class ProcedureCall extends SyntaxTreeNode {
-  static rule = new Or(); // TODO
+  procedure!: BottomExprs;
+  args!: Expr;
+  
+  static rule = new Caten(
+    new Match(false, 'procedure', BottomRung),
+    token('('),
+    new Repeat(new Match(true, 'elements', ExprRung), {
+      delimiter: token(','),
+      trailingDelimiter: true,
+    }),
+    token(')'),
+  );
 }
 
 export class MemberAccess extends SyntaxTreeNode {
-  static rule = new Or(); // TODO both . and ?.
+  expr!: BottomExprs;
+  op!: TokenKind<'.'> | TokenKind<'?.'>
+  memberName!: IdentifierToken;
+  
+  static rule = new Caten(
+    new Match(false, 'expr', BottomRung),
+    new Or(
+      new Match(false, 'op', token('.')),
+      new Match(false, 'op', token('?.')),
+    ),
+    new Match(false, 'memberName', token('identifier')),
+  );
 }
 
 export class TypeArguments extends SyntaxTreeNode {
-  static rule = new Or(); // TODO
+  static rule = new Caten(
+    new Match(false, 'expr', BottomRung),
+    token('['),
+    new Repeat(new Match(true, 'args', ExprRung), {
+      delimiter: token(','),
+      trailingDelimiter: true,
+    }),
+    token(']'),
+  );
 }
 
 export class Mul extends SyntaxTreeNode {
   left!: LeftUnaryOpsOrLower;
-  right!: LeftUnaryOpsOrLower;
+  rite!: LeftUnaryOpsOrLower;
   
   static rule = new Caten(
     new Match(false, 'left', LeftUnaryOpsRung),
     token('*'),
-    new Match(false, 'right', LeftUnaryOpsRung),
+    new Match(false, 'rite', LeftUnaryOpsRung),
   );
 }
 
 export class Div extends SyntaxTreeNode {
   left!: LeftUnaryOpsOrLower;
-  right!: LeftUnaryOpsOrLower;
+  rite!: LeftUnaryOpsOrLower;
   
   static rule = new Caten(
     new Match(false, 'left', LeftUnaryOpsRung),
     token('/'),
-    new Match(false, 'right', LeftUnaryOpsRung),
+    new Match(false, 'rite', LeftUnaryOpsRung),
   );
 }
 
 export class Add extends SyntaxTreeNode {
   left!: MulDivOpsOrLower;
-  right!: MulDivOpsOrLower;
+  rite!: MulDivOpsOrLower;
   
   static rule = new Caten(
     new Match(false, 'left', MulDivOpsRung),
     token('+'),
-    new Match(false, 'right', MulDivOpsRung),
+    new Match(false, 'rite', MulDivOpsRung),
   );
 }
 
 export class Sub extends SyntaxTreeNode {
   left!: MulDivOpsOrLower;
-  right!: MulDivOpsOrLower;
+  rite!: MulDivOpsOrLower;
   
   static rule = new Caten(
     new Match(false, 'left', MulDivOpsRung),
     token('-'),
-    new Match(false, 'right', MulDivOpsRung),
+    new Match(false, 'rite', MulDivOpsRung),
   );
 }
 
@@ -287,38 +366,37 @@ export class Comparison extends SyntaxTreeNode {
   exprs!: AddSubOpsOrLower;
   operators!: MulDivOpsRung;
   
-  static rule = new Repeat(
-    new Match(true, 'exprs', AddSubOpsRung),
-    new Or(
+  static rule = new Repeat(new Match(true, 'exprs', AddSubOpsRung), {
+    delimiter: new Or(
       new Match(true, 'operators', token('<')),
       new Match(true, 'operators', token('<=')),
       new Match(true, 'operators', token('==')),
       new Match(true, 'operators', token('>=')),
       new Match(true, 'operators', token('>')),
     ),
-    2,
-  );
+    lowerBound: 2,
+  });
 }
 
 export class Intersection extends SyntaxTreeNode {
   left!: ComparisonOrLower;
-  right!: ComparisonOrLower;
+  rite!: ComparisonOrLower;
   
   static rule = new Caten(
     new Match(false, 'left', ComparisonRung),
     token('&'),
-    new Match(false, 'right', ComparisonRung),
+    new Match(false, 'rite', ComparisonRung),
   );
 }
 
 export class Union extends SyntaxTreeNode {
   left!: IntersectionOrLower;
-  right!: IntersectionOrLower;
+  rite!: IntersectionOrLower;
   
   static rule = new Caten(
     new Match(false, 'left', IntersectionRung),
     token('|'),
-    new Match(false, 'right', IntersectionRung),
+    new Match(false, 'rite', IntersectionRung),
   );
 }
 
@@ -331,20 +409,81 @@ export class Conditional extends SyntaxTreeNode {
     new Match(false, 'cond', UnionRung),
     new Or(
       new Caten(
-        token('then'),
-        new Match(false, 'ifPos', UnionRung),
-        token('else'),
-        new Match(false, 'ifNeg', UnionRung),
+        token('then'), // Alternatively: ?
+        new Match(false, 'ifPos', ExprRung),
+        token('else'), // Alternatively: :
+        new Match(false, 'ifNeg', ConditionalRung),
       ),
       new Caten(
-        token('thand'),
-        new Match(false, 'ifPos', UnionRung),
+        token('thand'), // Alternatively: ?.
+        new Match(false, 'ifPos', ConditionalRung),
       ),
       new Caten(
-        token('thelse'),
-        new Match(false, 'ifNeg', UnionRung),
+        token('thelse'), // Alternatively: ?:
+        new Match(false, 'ifNeg', ConditionalRung),
       ),
     ),
+  );
+}
+
+// Alternatives: `<<` (`<<*`) or `<:` (`<:*`) or `:=`
+export class Assignment extends SyntaxTreeNode {
+  left!: UnionOrLower;
+  rite!: ComparisonOrLower;
+  
+  static rule: Caten = new Caten(
+    new Match(false, 'left', UnionRung),
+    // TODO add param "allowsAssignment" which you set to false, so you
+    // can replace this with `:=`.
+    token('<<'),
+    new Match(false, 'rite', ComparisonRung),
+  );
+}
+
+export class Return extends SyntaxTreeNode {
+  expr!: Expr;
+  
+  static rule: Caten = new Caten(
+    token('return'),
+    new Match(false, 'expr', ExprRung),
+  );
+}
+
+export class UniversalQuantifier extends SyntaxTreeNode {
+  varName!: IdentifierToken;
+  domain!: Expr;
+  body!: Expr;
+  
+  static rule: Caten = new Caten(
+    token('All'),
+    new Match(false, 'varName', token('identifier')),
+    new Maybe(
+      new Caten(
+        token(':'),
+        new Match(false, 'domain', ExprRung),
+      ),
+    ),
+    token('..'),
+    new Match(false, 'body', ExprRung),
+  );
+}
+
+export class ExistentialQuantifier extends SyntaxTreeNode {
+  varName!: IdentifierToken;
+  domain!: Expr;
+  body!: Expr;
+  
+  static rule: Caten = new Caten(
+    token('Ex'),
+    new Match(false, 'varName', token('identifier')),
+    new Maybe(
+      new Caten(
+        token(':'),
+        new Match(false, 'domain', ExprRung),
+      ),
+    ),
+    token('..'),
+    new Match(false, 'body', ExprRung),
   );
 }
 
@@ -365,7 +504,13 @@ matchValueComparison.match = Comparison;
 matchValueIntersection.match = Intersection;
 matchValueUnion.match = Union;
 matchValueConditional.match = Conditional;
+matchValueAssignment.match = Assignment;
+matchValueReturn.match = Return;
+matchValueUniversalQuantifer.match = UniversalQuantifier;
+matchValueExistentialQuantifier.match = ExistentialQuantifier;
 matchValueExprRung.match = ExprRung;
 
 matchTypeExprRung0.match = ExprRung;
 matchTypeExprRung1.match = ExprRung;
+matchBodyExprRung.match = ExprRung;
+matchParamsExprRung.match = ExprRung;

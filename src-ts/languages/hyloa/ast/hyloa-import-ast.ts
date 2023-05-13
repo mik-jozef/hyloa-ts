@@ -11,10 +11,11 @@ import { token } from "./tokenizer.js";
   must not.
   
   ```
+    // "#legacy" is a version alias
     import @npm mik-jozef:http-server#legacy/server/port.hyloa
     import @npm http-server/server/port.hyloa
-    import @mik-jozef:http-server/server/port.hyloa
-    import @http-server/server/port.hyloa
+    import mik-jozef:http-server/server/port.hyloa
+    import http-server/server/port.hyloa
     import /foo/bar.hyloa
     import ./ba-az.hyloa
   ```
@@ -23,7 +24,10 @@ import { token } from "./tokenizer.js";
 class KebabCase extends SyntaxTreeNode {
   rest!: KebabCase | null;
   
-  static rule = new Repeat(token('identifier'), token('-'), 1);
+  static rule = new Repeat(token('identifier'), {
+    delimiter: token('-'),
+    lowerBound: 1,
+  });
 }
 
 export type ExternalImportAst = HyloaImportAst & { parsedPath: ParsedPath };
@@ -32,7 +36,8 @@ export type ExternalImportAst = HyloaImportAst & { parsedPath: ParsedPath };
 type Raw<T> = T; // Let's cheat a little.
 
 export class HyloaImportAst extends ImportAst {
-  importPosition!: Token<'import'>;
+  // Matched so we can anchor errors at the keyword position.
+  importKeyword!: Token<'import'>;
   pathMergedTokens!: MergedTokens;
   
   path: string;
@@ -51,24 +56,23 @@ export class HyloaImportAst extends ImportAst {
   
   // TODO fix the grammar
   static rule = new Caten(
-    new Match(false, 'importPosition', token('import')),
+    new Match(false, 'importKeyword', token('import')),
     
     new Match(false, 'pathMergedTokens',
       new Caten(
         new Or(
+          new Caten(),
+            // TODO optional slash after this, but required if followed by a path
           new Caten(
-            token('@'),
             new Maybe(
               new Caten(
-                // This is a temporary hack to avoid grammar conflicts.
-                // I need a better parser, but I'll implement it in Hyloa.
-                token('$0'),
+                token('@'),
                 new Match(false, '_unused-registry', KebabCase),
               ),
             ),
             new Maybe(
               new Caten(
-                token('$1'),
+                token('$0'),
                 new Match(false, '_unused-scope', KebabCase),
                 token(":"),
               ),
@@ -81,19 +85,24 @@ export class HyloaImportAst extends ImportAst {
               ),
             ),
           ),
-          token('/'),
           token('.'),
-          new Repeat(token('..'), token('/'), 1),
-        ),
-        new Repeat(
-          new Caten(
-            token('$2'),
-            new Match(false, '_unused', KebabCase),
-          ),
-          token('/'),
+          new Repeat(token('..'), {
+            delimiter: token('/'),
+            lowerBound: 1,
+          }),
         ),
         new Maybe(
-          new Caten(token('identifier'), token('.'), token('identifier')),
+          new Caten(
+            token('$1'),
+            new Repeat(
+              token('/'),
+              {
+                delimiter: new Match(false, '_unused-folder', KebabCase),
+                trailingDelimiter: new Caten(token('identifier'), token('.'), token('identifier')),
+                lowerBound: 1,
+              }
+            ),
+          ),
         ),
       ),
     ),

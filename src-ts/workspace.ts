@@ -353,28 +353,28 @@ export class Workspace {
     const allErrors: ModuleLoadTimeError[][] = await Promise.all(
       module.imports.map(
         async (imported) => {
-          const { importPosition } = imported.ast;
+          const { importKeyword } = imported.ast;
           const { importedPath } = imported;
 
           switch (importedPath) {
             case Import.missingDefaultRegistry:
               return [
-                new MissingRegistry(module.path, importPosition, imported.ast.parsedPath!),
+                new MissingRegistry(module.path, importKeyword, imported.ast.parsedPath!),
               ];
             case Import.runawayRelativePath:
               return [
-                new RunawayRelativePath(module.path, importPosition, imported.ast.path),
+                new RunawayRelativePath(module.path, importKeyword, imported.ast.path),
               ];
             case Import.unknownDependency:
               return [
-                new UnknownDependency(module.path, importPosition, imported.ast.parsedPath!),
+                new UnknownDependency(module.path, importKeyword, imported.ast.parsedPath!),
               ];
             case Import.unknownVersionAlias:
               return [
-                new UnknownVersionAlias(module.path, importPosition, imported.ast.parsedPath!.versionAlias),
+                new UnknownVersionAlias(module.path, importKeyword, imported.ast.parsedPath!.versionAlias),
               ];
             default:
-              return this.loadPath(importedPath, module.path, importPosition);
+              return this.loadPath(importedPath, module.path, importKeyword);
           }
         },
       ),

@@ -146,10 +146,9 @@ function generateExpressionLadder<
         operands!: any;
         symbols: any;
         
-        static rule = new Repeat(
-          new Match(true, 'operands', LowerRung),
-          new Match(true, 'symbols', LowerRung),
-        );
+        static rule = new Repeat(new Match(true, 'operands', LowerRung), {
+          delimiter: new Match(true, 'symbols', LowerRung),
+        });
       } as any;
     }
     case 'custom':

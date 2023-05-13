@@ -9,7 +9,10 @@ import { token } from "./tokenizer.js";
 class KebabCase extends SyntaxTreeNode {
   rest!: KebabCase | null;
   
-  static rule = new Repeat(token('identifier'), token('-'), 1);
+  static rule = new Repeat(token('identifier'), {
+    delimiter: token('-'),
+    lowerBound: 1,
+  });
 }
 
 export type ExternalImportAst = LyoImportAst & { parsedPath: ParsedPath };
@@ -18,7 +21,7 @@ export type ExternalImportAst = LyoImportAst & { parsedPath: ParsedPath };
 type Raw<T> = T; // Let's cheat a little.
 
 export class LyoImportAst extends ImportAst {
-  importPosition!: Token<'import'>;
+  importKeyword!: Token<'import'>;
   pathMergedTokens!: MergedTokens;
   
   path: string;
@@ -69,14 +72,14 @@ export class LyoImportAst extends ImportAst {
           ),
           token('/'),
           token('.'),
-          new Repeat(token('..'), token('/'), 1),
+          new Repeat(token('..'), { delimiter: token('/'), lowerBound: 1 }),
         ),
         new Repeat(
           new Caten(
             token('$2'),
             new Match(false, '_unused', KebabCase),
           ),
-          token('/'),
+          { delimiter: token('/') },
         ),
         new Maybe(
           new Caten(token('identifier'), token('.'), token('identifier')),

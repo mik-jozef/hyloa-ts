@@ -1,16 +1,36 @@
-import { SyntaxTreeNode as syntaxTreeNodes, Caten, IdentifierToken, Maybe, Match, Or, Repeat } from 'lr-parser-typescript';
+import { SyntaxTreeNode, Caten, IdentifierToken, Maybe, Match, Or, Repeat } from 'lr-parser-typescript';
 
 import { Expr } from './expressions.js';
 import { token } from './tokenizer.js';
 
 
-export const matchParamsExprRung = new Match(true, 'params', null!);
+export const matchDefaultArgExprRung = new Match(true, 'defaultArg', null!);
 export const matchTypeExprRung = new Match(false, 'type', null!);
 export const matchBodyExprRung = new Match(true, 'body', null!);
 
-export class LetDeclaration extends syntaxTreeNodes {
+class Param extends SyntaxTreeNode {
+  name!: IdentifierToken;
+  type!: Expr;
+  static rule = new Caten(
+    new Match(false, 'name', token('identifier')),
+    new Maybe(
+      new Caten(
+        token(':'),
+        matchTypeExprRung,
+      ),
+    ),
+    new Maybe(
+      new Caten(
+        token(':='),
+        matchDefaultArgExprRung,
+      ),
+    ),
+  );
+}
+
+export class LetDeclaration extends SyntaxTreeNode {
   name!: IdentifierToken | null;
-  params!: Expr;
+  params!: Param[];
   type!: Expr;
   body!: Expr;
   
@@ -23,7 +43,7 @@ export class LetDeclaration extends syntaxTreeNodes {
       // TODO destructuring,
       new Caten(
         token('('),
-        new Repeat(matchParamsExprRung, {
+        new Repeat(new Match(true, 'params', Param), {
           delimiter: token(','),
           trailingDelimiter: true,
         }),

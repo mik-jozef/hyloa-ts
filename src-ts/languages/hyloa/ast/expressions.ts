@@ -5,7 +5,7 @@ import {
   LetDeclaration,
   matchTypeExprRung as matchTypeExprRung1,
   matchBodyExprRung,
-  matchParamsExprRung,
+  matchDefaultArgExprRung,
 } from "./let-declaration.js";
 import { token } from "./tokenizer.js";
 import { TokenKind } from "lr-parser-typescript/local/out/tokenizer.js";
@@ -251,7 +251,7 @@ class ObjectProperty extends SyntaxTreeNode {
 }
 
 export class ObjectLiteral extends SyntaxTreeNode {
-  properties!: ObjectProperty;
+  properties!: ObjectProperty[];
   
   static rule = new Caten(
     token('{'),
@@ -264,7 +264,7 @@ export class ObjectLiteral extends SyntaxTreeNode {
 }
 
 export class ArrayLiteral extends SyntaxTreeNode {
-  elements!: Expr;
+  elements!: Expr[];
   
   static rule = new Caten(
     token('['),
@@ -278,7 +278,7 @@ export class ArrayLiteral extends SyntaxTreeNode {
 
 export class ProcedureCall extends SyntaxTreeNode {
   procedure!: BottomExprs;
-  args!: Expr;
+  args!: Expr[];
   
   static rule = new Caten(
     new Match(false, 'procedure', BottomRung),
@@ -513,4 +513,4 @@ matchValueExprRung.match = ExprRung;
 matchTypeExprRung0.match = ExprRung;
 matchTypeExprRung1.match = ExprRung;
 matchBodyExprRung.match = ExprRung;
-matchParamsExprRung.match = ExprRung;
+matchDefaultArgExprRung.match = ExprRung;

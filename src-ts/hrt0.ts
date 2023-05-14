@@ -7,7 +7,7 @@
 /*/
 
 import { promises } from 'fs';
-import * as prompts from 'prompts';
+import prompts from 'prompts';
 
 import { Workspace } from './workspace.js'
 import { exit } from './utils/exit.js'
@@ -19,8 +19,9 @@ import { isKebabName } from './utils/is-kebab-name.js';
 
 /*/
   So far, these usages are planned:
-  `hyloa` -- Opens REPL
-  `hyloa < "// A hyloa program executed in REPL\nlet x := [...]"`
+  `hyloa` -- Prints some basic info
+  `hyloa repl` -- Opens REPL
+  `hyloa repl < "// A hyloa program executed in REPL\nlet x := [...]"`
   `hyloa compile outFolderPath projectName packageName targetName`
   `hyloa run projectName packageName ...args`
   `hyloa create workspace|project|package`
@@ -73,9 +74,32 @@ async function initWorkspace(): Promise<never> {
   exit('Created an empty workspace.');
 }
 
+const packageMainModule =
+`///
+  Entrypoint to the application.
+///
+
+import 'stdlib/io' as { WriteStream };
+
+lib-export class makeMain {
+  out: WriteStream;
+  
+  constructor({
+    out: WriteStream,
+  }) {
+    this.out = out;
+  }
+  
+  run() {
+    nowait out.write('Hello, world!\n');
+  }
+}
+`;
+
 async function initPackage(projectName: string): Promise<string> {
   const { packageName } = await prompts([
     {
+      message: 'Package name:',
       type: 'text',
       name: 'packageName',
       validate(value) {
@@ -84,19 +108,27 @@ async function initPackage(projectName: string): Promise<string> {
     },
   ]);
   
-  await promises.writeFile(`${cwd}/projects/${projectName}/${packageName}/package.json`,
-    JSON.stringify({
-      defaultRegistry: null,
-      registries: {},
-      
-      publishTo: null,
-      
-      targets: {},
-      
-      dependencies: {},
-      devDependencies: {},
-    }, null, 2),
-  );
+  await promises.mkdir(`${cwd}/projects/${projectName}/${packageName}`);
+  
+  await Promise.all([
+    promises.writeFile(`${cwd}/projects/${projectName}/${packageName}/package.json`,
+      JSON.stringify({
+        defaultRegistry: null,
+        registries: {},
+        
+        publishTo: null,
+        
+        targets: {},
+        
+        dependencies: {},
+        devDependencies: {},
+      }, null, 2),
+    ),
+    promises.writeFile(
+      `${cwd}/projects/${projectName}/${packageName}/main.hyloa`,
+      packageMainModule,
+    ),
+  ]);
   
   return packageName;
 }
@@ -113,7 +145,7 @@ async function initProject(): Promise<void> {
     },
   ]);
   
-  promises.mkdir(cwd + '/projects/' + projectName, { recursive: true }),
+  await promises.mkdir(cwd + '/projects/' + projectName, { recursive: true }),
   
   await promises.writeFile(`${cwd}/projects/${projectName}/project.json`,
     JSON.stringify({
@@ -145,7 +177,7 @@ function initCommandFn() {
   }
   
   switch (subcommand) {
-    case 'workspace': initWorkspace();
+    case 'workspace': initWorkspace(); break;
     case 'project': initProject(); break;
     default:
       exit(`Subcommand must be either "workspace" or "project", not "${subcommand}".`);
@@ -175,18 +207,35 @@ function fixCommandMapType<T extends Record<string, Command>>(t: T): T & Command
   return t;
 }
 
+/*/
+  TODO `hyloa run path/to/file.hyloa`. This cannot be
+  done with `hyloa eval < path/to/file.hyloa`, because
+  the latter would mess up relative imports.
+/*/
+
 const commands = fixCommandMapType({
+  eval: {
+    fn: evalCommandFn,
+    args: 'hyloa eval',
+    description: ''
+      + 'Opens an interactive Hyloa interpreter (REPL).\n'
+      + '\n'
+      + 'Tip: you can also use the REPL like this:\n'
+      + 'hyloa eval <<< "let x = 42; _print(x);"'
+      ,
+  },
   compile: {
     fn: compileCommandFn,
     args: 'hyloa compile (outFolderPath) (projectName) (packageName) (targetName)',
-    description: 'Compiles a package. TODO details.\n',
+    description: 'Compiles a package. TODO details.',
   },
   help: {
     fn: helpCommandFn,
     args: 'hyloa help [command]',
     description: ''
       + 'Displays help for a particular [command]. If [command] is '
-      + 'not provided, prints the default help message.\n'
+      + 'not provided, prints the default help message, including '
+      + 'a list of all commands.'
       ,
   },
   init: {
@@ -198,7 +247,7 @@ const commands = fixCommandMapType({
       + '`init project` interactively creates a new empty project. '
       + 'The command assumes the current folder is a workspace.\n'
       + '\n'
-      + 'For more about the folder structure used by Hyloa, TODO link to docs\n'
+      + 'For more about the folder structure used by Hyloa, TODO link to docs'
       ,
   },
   run: {
@@ -206,19 +255,23 @@ const commands = fixCommandMapType({
     args: 'hyloa run (projectName) (packageName) (...programArgs)',
     description: 'Runs a program. TODO details.\n',
   },
-  '-h': { fn: helpCommandFn, args: null, description: null },
-  '--help': { fn: helpCommandFn, args: null, description: null },
 });
 
 const subcommandNames = Object.keys(commands)
   .filter(name => !name.startsWith('-'))
 ;
 
-function helpCommandFn() {
-  if (subcommandName !== 'help' && args.length !== 0) {
-    exit('Unexpected arguments:', args);
-  }
+function evalCommandFn() {
+  const repl = new Repl(process.stdin, process.stdout);
   
+  repl.loop({
+    // TODO default variables like fs, Hyloa.version, _print, etc
+    executionContext: new ExecutionContext(),
+    printPrompts: !!process.stdin.isTTY,
+  });
+}
+
+function helpCommandFn() {
   if (2 <= args.length) {
     exit('Expected at most 1 argument. Usage:\n' + commands.help.args);
   }
@@ -232,43 +285,31 @@ function helpCommandFn() {
         + `Available commands: ${subcommandNames.join(', ')}.`);
     }
     
-    exit(command.args + '\n\n' + command.description);
+    exit('Usage: ' + command.args + '\n\n' + command.description);
   }
   
-  exit(`REPL usage:
-hyloa  # Opens REPL.
-
-Tip: you can also use the REPL like this:
-hyloa < "let x = 42; _print(x);"
-
-Commands:
+  exit(`Commands:
 hyloa example-command (requiredParameter) [optionalParameter]
 ${Object.values(commands)
   .filter((command) => command.args !== null)
   .map((command) => command.args + '\n')
   .join('')
 }
-You can use the "help" command to get more details about a particular command.
-
-Hyloa version: TODO
-Official website: https://TODO.com`);
+You can use the "help" command to get more details about a particular command.`);
 }
 
 if (subcommandName === null) {
-  // TODO make sure `hyloa < 'script.hyloa'` works.
-  const repl = new Repl(process.stdin, process.stdout);
-  
-  repl.loop({
-    // TODO default variables like fs, Hyloa.version, etc
-    executionContext: new ExecutionContext(),
-    printPrompts: !!process.stdin.isTTY,
-  });
-} else {
-  const command = commands[subcommandName];
-
-  if (command === undefined) {
-    exit(`Unknown command: "${subcommandName}". Try \`hyloa --help\`.`);
-  }
-
-  command.fn();
+  exit(''
+    + 'Hyloa compiler version: TODO\n'
+    + 'Official website: https://TODO.com\n'
+    + 'Use `hyloa help` for a list of commands.',
+  );
 }
+
+const command = commands[subcommandName];
+
+if (command === undefined) {
+  exit(`Unknown command: "${subcommandName}". Try \`hyloa help\`.`);
+}
+
+command.fn();

@@ -33,9 +33,7 @@ export class Repl {
     for await (const _input of reader) {
       // TODO
       
-      exit('REPL is not implemented yet.\n' +
-        'Try `hyloa --help`'
-      );
+      exit('REPL is not implemented yet.');
     }
   }
 }

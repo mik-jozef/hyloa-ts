@@ -11,12 +11,13 @@ import { token } from "./tokenizer.js";
 import { TokenKind } from "lr-parser-typescript/local/out/tokenizer.js";
 
 
+// TODO complement, "and" and "or" operators
 const matchValueClassLiteral = new Match(false, 'value', null!);
 const matchValueObjectLiteral = new Match(false, 'value', null!);
 const matchValueArrayLiteral = new Match(false, 'value', null!);
 const matchValueProcedureCall = new Match(false, 'value', null!);
-const matchValueMemberAccess = new Match(false, 'value', null!);
 const matchValueTypeArguments = new Match(false, 'value', null!);
+const matchValueMemberAccess = new Match(false, 'value', null!);
 const matchValueNegation = new Match(false, 'value', null!);
 const matchValueInverse = new Match(false, 'value', null!);
 const matchValueAwait = new Match(false, 'value', null!);
@@ -55,8 +56,8 @@ type BottomExprs =
   | NumberLiteral
   | IdentifierToken
   | ProcedureCall
-  | MemberAccess
   | TypeArguments
+  | MemberAccess
 ;
 
 export class BottomRung extends SyntaxTreeNode {
@@ -71,8 +72,8 @@ export class BottomRung extends SyntaxTreeNode {
     new Match(false, 'value', NumberLiteral),
     new Match(false, 'value', token('identifier')),
     matchValueProcedureCall,
-    matchValueMemberAccess,
     matchValueTypeArguments,
+    matchValueMemberAccess,
     new Caten(
       token('('),
       matchValueExprRung,
@@ -291,6 +292,18 @@ export class ProcedureCall extends SyntaxTreeNode {
   );
 }
 
+export class TypeArguments extends SyntaxTreeNode {
+  static rule = new Caten(
+    new Match(false, 'expr', BottomRung),
+    token('['),
+    new Repeat(new Match(true, 'args', ExprRung), {
+      delimiter: token(','),
+      trailingDelimiter: true,
+    }),
+    token(']'),
+  );
+}
+
 export class MemberAccess extends SyntaxTreeNode {
   expr!: BottomExprs;
   op!: TokenKind<'.'> | TokenKind<'?.'>
@@ -303,18 +316,6 @@ export class MemberAccess extends SyntaxTreeNode {
       new Match(false, 'op', token('?.')),
     ),
     new Match(false, 'memberName', token('identifier')),
-  );
-}
-
-export class TypeArguments extends SyntaxTreeNode {
-  static rule = new Caten(
-    new Match(false, 'expr', BottomRung),
-    token('['),
-    new Repeat(new Match(true, 'args', ExprRung), {
-      delimiter: token(','),
-      trailingDelimiter: true,
-    }),
-    token(']'),
   );
 }
 
@@ -383,7 +384,7 @@ export class Intersection extends SyntaxTreeNode {
   rite!: ComparisonOrLower;
   
   static rule = new Caten(
-    new Match(false, 'left', ComparisonRung),
+    new Match(false, 'left', ComparisonRung), // TODO change to IntersectionRung
     token('&'),
     new Match(false, 'rite', ComparisonRung),
   );
@@ -393,8 +394,9 @@ export class Union extends SyntaxTreeNode {
   left!: IntersectionOrLower;
   rite!: IntersectionOrLower;
   
+  // TODO | prefix
   static rule = new Caten(
-    new Match(false, 'left', IntersectionRung),
+    new Match(false, 'left', IntersectionRung), // TODO change to UnionRung
     token('|'),
     new Match(false, 'rite', IntersectionRung),
   );

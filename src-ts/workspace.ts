@@ -5,18 +5,16 @@
     (local) packages.
   - A package can be local (inside the repository)
     or a library (imported through a package manager).
-  - A program is a group of packages -- a main package
-    and its dependencies (all dependencies are libraries).
   - A target is a collection of settings that tell the
-    compiler how to compile a program.
-  - Every program has exactly one target. Neither the
-    repository nor packages themselves have targets.
-  - A project can contain multiple programs. These are
-    specified in `project.json`.
+    compiler how to compile a program. Targets are specified
+    in packages.
+  - A program is a package with one its target and all
+    the package's dependencies (all dependencies are
+    libraries).
   - A workspace contains zero or more projects. It exists
     so the computational costs of compiling/modifying
     a single package can be shared, and also as a place
-    to store the projects. Not all projects / programs
+    to store the projects. Not all projects / packages
     of a project need to be loaded to save resources
     if the developer is only working on some parts of
     the project.
@@ -32,6 +30,8 @@ import { hyloaTokenizer } from './languages/hyloa/ast/tokenizer.js';
 import { Import } from './languages/import.js';
 import { LyoModuleAst } from './languages/lyo/ast/lyo-module-ast.js';
 import { lyoTokenizer } from './languages/lyo/ast/tokenizer.js';
+import { SiresModuleAst } from './languages/sires/ast/sires-module-ast.js';
+import { siresTokenizer } from './languages/sires/ast/tokenizer.js';
 import { Module, ModuleAst, ModulePath, ModulePathAny } from './languages/module.js';
 import { LocalPackageId, Package, PackageAny, PackageId, PackageJson, PublishedPackage, PublishedPackageId } from './languages/package.js';
 import { Project, ProjectJson } from './languages/project.js';
@@ -48,6 +48,7 @@ const parserTablePath = (lang: string) => __dirname + `/../../src-ts/languages/$
 const parserMap = {
   hyloa: new Parser(hyloaTokenizer, HyloaModuleAst, parserTablePath('hyloa')),
   lyo: new Parser(lyoTokenizer, LyoModuleAst, parserTablePath('lyo')),
+  sires: new Parser(siresTokenizer, SiresModuleAst, parserTablePath('sires')),
 };
 
 type ParserInMap = typeof parserMap[keyof typeof parserMap];

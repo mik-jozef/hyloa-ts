@@ -4,7 +4,7 @@ import { createInterface } from "readline";
 import { Workspace } from "./workspace.js";
 import { exit } from "./utils/exit.js";
 import { SingleModuleProvider } from "./module-provider.js";
-import { ExecutionContext } from "./languages/runtime/execution-context.js";
+import { ExecutionContext } from "./runtime/execution-context.js";
 import { LocalPackageId } from "./languages/package.js";
 
 type ReplOptions = {

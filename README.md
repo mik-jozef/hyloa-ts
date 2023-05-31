@@ -18,7 +18,7 @@ Required folder structure for a workspace:
   |--- lib/ -- Contains dependencies of the projects.
   | \- (Opaque content, managed by a package manager.)
   |
-  |--- programs/ -- Contains compiled programs. (Optional.)
+  |--- out/ -- Contains compiled programs. (Optional.)
   | |--- program-0/
   | | \- (Content depends on the project/program.)
   | :

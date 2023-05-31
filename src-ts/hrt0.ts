@@ -11,7 +11,7 @@ import prompts from 'prompts';
 
 import { Workspace } from './workspace.js'
 import { exit } from './utils/exit.js'
-import { ExecutionContext } from './languages/runtime/execution-context.js'
+import { ExecutionContext } from './runtime/execution-context.js'
 import { Repl } from './repl.js'
 import { Folder } from './utils/fs.js'
 import { isKebabName } from './utils/is-kebab-name.js';
@@ -67,7 +67,7 @@ function compileCommandFn() {
 async function initWorkspace(): Promise<never> {
   await Promise.all([
     promises.mkdir(cwd + '/projects', { recursive: true }),
-    promises.mkdir(cwd + '/programs', { recursive: true }),
+    promises.mkdir(cwd + '/out', { recursive: true }),
     promises.mkdir(cwd + '/lib', { recursive: true }),
   ]);
   
@@ -226,8 +226,15 @@ const commands = fixCommandMapType({
   },
   compile: {
     fn: compileCommandFn,
+    // TODO if inside a project/package, don't require their names.
     args: 'hyloa compile (outFolderPath) (projectName) (packageName) (targetName)',
-    description: 'Compiles a package. TODO details.',
+    description: ''
+     + 'Compiles a package.\n.'
+     + '\n.'
+     + 'The command expects to be called from the workspace folder.\n.'
+     + '\n.'
+     + 'Example usage: `hyloa compile @folder(out/foobar) foo bar web`\n.'
+     ,
   },
   help: {
     fn: helpCommandFn,
@@ -240,7 +247,7 @@ const commands = fixCommandMapType({
   },
   init: {
     fn: initCommandFn,
-    args: 'hyloa init ("workspace" | "project")',
+    args: 'hyloa init ("workspace" | "project")', // TODO init package; single-package projects.
     description: ''
       + '`init workspace` makes the current (empty) folder into a workspace.'
       + '\n'

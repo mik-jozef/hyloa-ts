@@ -11,6 +11,7 @@ export const matchBodyExprRung = new Match(true, 'body', null!);
 class Param extends SyntaxTreeNode {
   name!: IdentifierToken;
   type!: Expr;
+  
   static rule = new Caten(
     new Match(false, 'name', token('identifier')),
     new Maybe(

@@ -62,7 +62,7 @@ export class SingleModuleProvider implements ModuleProvider {
     '{ dependencies: {}, devDependencies: {}, publishTo: {} }';
   
   static defaultProjectJson =
-    '{ programs: {}, registries: {}, defaultRegistry: null }';
+    '{ registries: {}, defaultRegistry: null }';
   
   constructor(
     public packageId: LocalPackageId,

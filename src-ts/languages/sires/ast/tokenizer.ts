@@ -26,4 +26,4 @@ export const tokenStringArray = [
 
 export const siresTokenizer = new tokenizers(tokenStringArray);
 
-export const token = siresTokenizer.token.bind(siresTokenizer);
+export const token = siresTokenizer.token;

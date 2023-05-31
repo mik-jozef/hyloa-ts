@@ -1,0 +1,14 @@
+# Sires
+
+Sires (*Si*mple *re*cord*s*) is a toy programming language and
+a simplification of Hyloa, whose type system nevertheless has
+all of Hyloa's essential features.
+
+Sires is meant to provide a simplified formalism that can be used
+to analyze Hyloa's type system. For this reason, features of Hyloa
+such as procedure overloading, classes or most operators (which could
+all be considered syntax sugar) are stripped, leaving just a bare
+minimum.
+
+## Features
+TODO

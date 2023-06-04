@@ -50,8 +50,14 @@ function createWorkspace() {
 function compileCommandFn() {
   if (args.length !== 4) exit('Expected four args. Try `hyloa help compile`.');
   
-  const [ outFolderPath, projectName, packageName, targetName ] =
+  const [ outFolderPathArg, projectName, packageName, targetName ] =
     args as [ string, string, string, string ];
+  
+  const outFolderPath = outFolderPathArg.match(/^@folder\((?<path>[\w/.-]*)\)$/)?.groups?.path
+  
+  if (outFolderPath === undefined) {
+    exit(`Path must be a folder (eg. \`@folder(out)\`), instead got: ${outFolderPathArg}`);
+  }
   
   createWorkspace().compileProgram(
     new Folder(

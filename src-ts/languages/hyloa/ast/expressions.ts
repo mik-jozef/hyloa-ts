@@ -28,6 +28,7 @@ const matchValueSub = new Match(false, 'value', null!);
 const matchValueComparison = new Match(false, 'value', null!);
 const matchValueIntersection = new Match(false, 'value', null!);
 const matchValueUnion = new Match(false, 'value', null!);
+const matchValueBecomes = new Match(false, 'value', null!);
 const matchValueConditional = new Match(false, 'value', null!);
 const matchValueAssignment = new Match(false, 'value', null!);
 const matchValueReturn = new Match(false, 'value', null!);
@@ -176,9 +177,23 @@ export class UnionRung extends SyntaxTreeNode {
   );
 }
 
+export type BecomesOrLower =
+  | Becomes
+  | UnionOrLower
+;
+
+export class BecomesRung extends SyntaxTreeNode {
+  static hidden = true;
+  
+  static rule = new Or(
+    matchValueBecomes,
+    new Match(false, 'value', UnionRung),
+  );
+}
+
 export type ConditionalOrLower =
   | Conditional
-  | IntersectionOrLower
+  | BecomesOrLower
 ;
 
 export class ConditionalRung extends SyntaxTreeNode {
@@ -187,7 +202,7 @@ export class ConditionalRung extends SyntaxTreeNode {
   static rule = new Or(
     matchValueConditional,
     matchValueAssignment,
-    new Match(false, 'value', UnionRung),
+    new Match(false, 'value', BecomesRung),
   );
 }
 
@@ -372,8 +387,6 @@ export class Comparison extends SyntaxTreeNode {
       new Match(true, 'operators', token('<')),
       new Match(true, 'operators', token('<=')),
       new Match(true, 'operators', token('==')),
-      new Match(true, 'operators', token('>=')),
-      new Match(true, 'operators', token('>')),
     ),
     lowerBound: 2,
   });
@@ -402,8 +415,19 @@ export class Union extends SyntaxTreeNode {
   );
 }
 
+export class Becomes extends SyntaxTreeNode {
+  left!: UnionOrLower;
+  rite!: UnionOrLower;
+  
+  static rule = new Caten(
+    new Match(false, 'left', UnionRung),
+    token('>>'),
+    new Match(false, 'rite', UnionRung),
+  );
+}
+
 export class Conditional extends SyntaxTreeNode {
-  conditional!: UnionOrLower;
+  conditional!: BecomesOrLower;
   ifPos!: Expr | null;
   ifNeg!: ConditionalOrLower | null;
   
@@ -505,6 +529,7 @@ matchValueSub.match = Sub;
 matchValueComparison.match = Comparison;
 matchValueIntersection.match = Intersection;
 matchValueUnion.match = Union;
+matchValueBecomes.match = Becomes;
 matchValueConditional.match = Conditional;
 matchValueAssignment.match = Assignment;
 matchValueReturn.match = Return;

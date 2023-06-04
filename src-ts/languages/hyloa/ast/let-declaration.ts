@@ -66,7 +66,13 @@ export class LetDeclaration extends SyntaxTreeNode {
       ),
       new Caten(
         token('{'),
-        matchBodyExprRung,
+        new Repeat(
+          matchBodyExprRung,
+          {
+            delimiter: token(';'),
+            trailingDelimiter: true,
+          },
+        ),
         token('}'),
       ),
     ),

@@ -220,11 +220,17 @@ export class LetDeclaration extends SyntaxTreeNode {
     new Or(
       new Caten(
         token(':='),
-        new Match(false, 'body', ExprRung),
+        new Match(true, 'body', ExprRung),
       ),
       new Caten(
         token('{'),
-        new Match(false, 'body', ExprRung),
+        new Repeat(
+          new Match(true, 'body', ExprRung),
+          {
+            delimiter: token(';'),
+            trailingDelimiter: true,
+          },
+        ),
         token('}'),
       ),
     ),
@@ -452,7 +458,10 @@ export class SiresModuleAst extends ModuleAst {
 
   static rule = new Caten(
     new Repeat(
-      new Match(true, 'defs', LetDeclaration),
+      new Caten(
+        new Match(true, 'defs', LetDeclaration),
+        token(';'),
+      ),
     ),
   );
 }

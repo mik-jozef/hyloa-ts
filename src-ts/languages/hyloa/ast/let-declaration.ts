@@ -29,11 +29,10 @@ class Param extends SyntaxTreeNode {
   );
 }
 
-export class LetDeclaration extends SyntaxTreeNode {
+export class LetDeclarationHead extends SyntaxTreeNode {
   name!: IdentifierToken | null;
   params!: Param[];
   type!: Expr;
-  body!: Expr;
   
   static rule = new Caten(
     token('let'),
@@ -58,6 +57,15 @@ export class LetDeclaration extends SyntaxTreeNode {
         matchTypeExprRung,
       ),
     ),
+  );
+}
+
+export class LetDeclaration extends SyntaxTreeNode {
+  head!: LetDeclarationHead;
+  body!: (Expr | LetDeclarationHead)[];
+  
+  static rule = new Caten(
+    new Match(false, 'head', LetDeclarationHead),
     
     new Or(
       new Caten(
@@ -67,7 +75,10 @@ export class LetDeclaration extends SyntaxTreeNode {
       new Caten(
         token('{'),
         new Repeat(
-          matchBodyExprRung,
+          new Or(
+            matchBodyExprRung,
+            new Match(true, 'body', LetDeclarationHead),
+          ),
           {
             delimiter: token(';'),
             trailingDelimiter: true,

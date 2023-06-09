@@ -13,7 +13,7 @@ import { token } from "./tokenizer.js";
 // TODO complement, "and" and "or" operators
 const matchValueClassLiteral = new Match(false, 'value', null!);
 const matchValueObjectLiteral = new Match(false, 'value', null!);
-const matchValueArrayLiteral = new Match(false, 'value', null!);
+//const matchValueArrayLiteral = new Match(false, 'value', null!);
 const matchValueProcedureCall = new Match(false, 'value', null!);
 const matchValueTypeArguments = new Match(false, 'value', null!);
 const matchValueMemberAccess = new Match(false, 'value', null!);
@@ -51,7 +51,7 @@ export class TextLiteral extends SyntaxTreeNode {
 type BottomExprs =
   | ClassLiteral
   | ObjectLiteral
-  | ArrayLiteral
+  //| ArrayLiteral
   | StringLiteral // Unformatted utf-8 string.
   | TextLiteral // Markdown (or simillarly) formatted text.
   | NumberLiteral
@@ -67,7 +67,7 @@ export class BottomRung extends SyntaxTreeNode {
   static rule = new Or(
     matchValueClassLiteral,
     matchValueObjectLiteral,
-    matchValueArrayLiteral,
+    //matchValueArrayLiteral,
     new Match(false, 'value', StringLiteral),
     new Match(false, 'value', TextLiteral),
     new Match(false, 'value', NumberLiteral),
@@ -293,7 +293,9 @@ export class ObjectLiteral extends SyntaxTreeNode {
   );
 }
 
-// TODO delete? Let's rather use `Array(0, 1, 2)` instead of `[0, 1, 2]`
+/* TODO delete? Let's rather use `Array(0, 1, 2)` instead of `[0, 1, 2]`
+// Also not that I care, but including array literas swells the parser
+// table by *so much* I cannnot believe it :O was ist goin on
 export class ArrayLiteral extends SyntaxTreeNode {
   elements!: Expr[];
   
@@ -305,7 +307,7 @@ export class ArrayLiteral extends SyntaxTreeNode {
     }),
     token(']'),
   );
-}
+}*/
 
 export class ProcedureCall extends SyntaxTreeNode {
   procedure!: BottomExprs;
@@ -408,11 +410,11 @@ export class Comparison extends SyntaxTreeNode {
 }
 
 export class Intersection extends SyntaxTreeNode {
-  left!: ComparisonOrLower;
+  left!: IntersectionOrLower;
   rite!: ComparisonOrLower;
   
   static rule = new Caten(
-    new Match(false, 'left', ComparisonRung), // TODO change to IntersectionRung
+    new Match(false, 'left', IntersectionRung),
     token('&'),
     new Match(false, 'rite', ComparisonRung),
   );
@@ -420,12 +422,12 @@ export class Intersection extends SyntaxTreeNode {
 
   // TODO "&" prefix
 export class Union extends SyntaxTreeNode {
-  left!: IntersectionOrLower;
+  left!: UnionOrLower;
   rite!: IntersectionOrLower;
   
   // TODO "|" prefix
   static rule = new Caten(
-    new Match(false, 'left', IntersectionRung), // TODO change to UnionRung
+    new Match(false, 'left', UnionRung),
     token('|'),
     new Match(false, 'rite', IntersectionRung),
   );
@@ -517,7 +519,7 @@ export class Conditional extends SyntaxTreeNode {
   ifNeg!: ConditionalOrLower | null;
   
   static rule = new Caten(
-    new Match(false, 'cond', WithRung), // TODO this was Union but was supposed to be Becomes before With was added
+    new Match(false, 'cond', WithRung),
     new Or(
       new Caten(
         token('then'), // Alternatively: ?
@@ -600,7 +602,7 @@ export class ExistentialQuantifier extends SyntaxTreeNode {
 
 matchValueClassLiteral.match = ClassLiteral;
 matchValueObjectLiteral.match = ObjectLiteral;
-matchValueArrayLiteral.match = ArrayLiteral;
+//matchValueArrayLiteral.match = ArrayLiteral;
 matchValueProcedureCall.match = ProcedureCall;
 matchValueMemberAccess.match = MemberAccess;
 matchValueTypeArguments.match = TypeArguments;

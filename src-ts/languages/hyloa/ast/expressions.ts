@@ -20,6 +20,7 @@ const matchValueMemberAccess = new Match(false, 'value', null!);
 const matchValueNegation = new Match(false, 'value', null!);
 const matchValueInverse = new Match(false, 'value', null!);
 const matchValueAwait = new Match(false, 'value', null!);
+const matchValueLeftUnaryPrefix = new Match(false, 'value', null!);
 const matchValueMul = new Match(false, 'value', null!);
 const matchValueDiv = new Match(false, 'value', null!);
 const matchValueAdd = new Match(false, 'value', null!);
@@ -87,6 +88,7 @@ type LeftUnaryOpsOrLower =
   | Negation
   | Inverse
   | Await
+  | LeftUnaryPrefix
   | BottomExprs
 ;
 
@@ -97,6 +99,7 @@ export class LeftUnaryOpsRung extends SyntaxTreeNode {
     matchValueNegation,
     matchValueInverse,
     matchValueAwait,
+    matchValueLeftUnaryPrefix,
     new Match( false, 'value', BottomRung ),
   );
 }
@@ -242,33 +245,6 @@ export class ExprRung extends SyntaxTreeNode {
 
 // End of the ladder.
 
-export class Negation extends SyntaxTreeNode {
-  expr!: LeftUnaryOpsOrLower;
-  
-  static rule = new Caten(
-    token('!'),
-    new Match(false, 'expr', LeftUnaryOpsRung),
-  );
-}
-
-export class Inverse extends SyntaxTreeNode {
-  expr!: LeftUnaryOpsOrLower;
-  
-  static rule = new Caten(
-    token('-'),
-    new Match(false, 'expr', LeftUnaryOpsRung),
-  );
-}
-
-export class Await extends SyntaxTreeNode {
-  expr!: LeftUnaryOpsOrLower;
-  
-  static rule = new Caten(
-    token('await'),
-    new Match(false, 'expr', LeftUnaryOpsRung),
-  );
-}
-
 class ObjectProperty extends SyntaxTreeNode {
   name!: IdentifierToken;
   value!: Expr;
@@ -351,6 +327,46 @@ export class MemberAccess extends SyntaxTreeNode {
   );
 }
 
+export class Negation extends SyntaxTreeNode {
+  expr!: LeftUnaryOpsOrLower;
+  
+  static rule = new Caten(
+    token('!'),
+    new Match(false, 'expr', LeftUnaryOpsRung),
+  );
+}
+
+export class Inverse extends SyntaxTreeNode {
+  expr!: LeftUnaryOpsOrLower;
+  
+  static rule = new Caten(
+    token('-'),
+    new Match(false, 'expr', LeftUnaryOpsRung),
+  );
+}
+
+export class Await extends SyntaxTreeNode {
+  expr!: LeftUnaryOpsOrLower;
+  
+  static rule = new Caten(
+    token('await'),
+    new Match(false, 'expr', LeftUnaryOpsRung),
+  );
+}
+
+export class LeftUnaryPrefix extends SyntaxTreeNode {
+  expr!: LeftUnaryOpsOrLower;
+  token!: Token<'|'> | Token<'&'>;
+  
+  static rule = new Caten(
+    new Or(
+      new Match(false, 'token', token('|')),
+      new Match(false, 'token', token('&')),
+    ),
+    new Match(false, 'expr', LeftUnaryOpsRung),
+  );
+}
+
 export class Mul extends SyntaxTreeNode {
   left!: LeftUnaryOpsOrLower;
   rite!: LeftUnaryOpsOrLower;
@@ -420,12 +436,10 @@ export class Intersection extends SyntaxTreeNode {
   );
 }
 
-  // TODO "&" prefix
 export class Union extends SyntaxTreeNode {
   left!: UnionOrLower;
   rite!: IntersectionOrLower;
   
-  // TODO "|" prefix
   static rule = new Caten(
     new Match(false, 'left', UnionRung),
     token('|'),
@@ -609,6 +623,7 @@ matchValueTypeArguments.match = TypeArguments;
 matchValueNegation.match = Negation;
 matchValueInverse.match = Inverse;
 matchValueAwait.match = Await;
+matchValueLeftUnaryPrefix.match = LeftUnaryPrefix;
 matchValueMul.match = Mul;
 matchValueDiv.match = Div;
 matchValueAdd.match = Add;

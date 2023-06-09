@@ -1,4 +1,4 @@
-import { Caten, IdentifierToken, Match, Maybe, Or, Repeat, SyntaxTreeNode } from "lr-parser-typescript";
+import { Caten, IdentifierToken, Match, Maybe, Or, Repeat, SyntaxTreeNode, Token } from "lr-parser-typescript";
 
 import { ClassLiteral, matchTypeExprRung as matchTypeExprRung0 } from "./class-literal.js";
 import {
@@ -8,7 +8,6 @@ import {
   matchDefaultArgExprRung,
 } from "./let-declaration.js";
 import { token } from "./tokenizer.js";
-import { TokenKind } from "lr-parser-typescript/local/out/tokenizer.js";
 
 
 // TODO complement, "and" and "or" operators
@@ -29,6 +28,7 @@ const matchValueComparison = new Match(false, 'value', null!);
 const matchValueIntersection = new Match(false, 'value', null!);
 const matchValueUnion = new Match(false, 'value', null!);
 const matchValueBecomes = new Match(false, 'value', null!);
+const matchValueWith = new Match(false, 'value', null!);
 const matchValueConditional = new Match(false, 'value', null!);
 const matchValueAssignment = new Match(false, 'value', null!);
 const matchValueReturn = new Match(false, 'value', null!);
@@ -191,9 +191,23 @@ export class BecomesRung extends SyntaxTreeNode {
   );
 }
 
+export type WithOrLower =
+  | With
+  | BecomesOrLower
+;
+
+export class WithRung extends SyntaxTreeNode {
+  static hidden = true;
+  
+  static rule = new Or(
+    matchValueWith,
+    new Match(false, 'value', BecomesRung),
+  );
+}
+
 export type ConditionalOrLower =
   | Conditional
-  | BecomesOrLower
+  | WithOrLower
 ;
 
 export class ConditionalRung extends SyntaxTreeNode {
@@ -202,7 +216,7 @@ export class ConditionalRung extends SyntaxTreeNode {
   static rule = new Or(
     matchValueConditional,
     matchValueAssignment,
-    new Match(false, 'value', BecomesRung),
+    new Match(false, 'value', WithRung),
   );
 }
 
@@ -279,6 +293,7 @@ export class ObjectLiteral extends SyntaxTreeNode {
   );
 }
 
+// TODO delete? Let's rather use `Array(0, 1, 2)` instead of `[0, 1, 2]`
 export class ArrayLiteral extends SyntaxTreeNode {
   elements!: Expr[];
   
@@ -321,7 +336,7 @@ export class TypeArguments extends SyntaxTreeNode {
 
 export class MemberAccess extends SyntaxTreeNode {
   expr!: BottomExprs;
-  op!: TokenKind<'.'> | TokenKind<'?.'>
+  op!: Token<'.'> | Token<'?.'>
   memberName!: IdentifierToken;
   
   static rule = new Caten(
@@ -403,11 +418,12 @@ export class Intersection extends SyntaxTreeNode {
   );
 }
 
+  // TODO "&" prefix
 export class Union extends SyntaxTreeNode {
   left!: IntersectionOrLower;
   rite!: IntersectionOrLower;
   
-  // TODO | prefix
+  // TODO "|" prefix
   static rule = new Caten(
     new Match(false, 'left', IntersectionRung), // TODO change to UnionRung
     token('|'),
@@ -426,13 +442,82 @@ export class Becomes extends SyntaxTreeNode {
   );
 }
 
+const matchTypeDestructuredMembers = new Match(false, 'type', null!);
+
+export class DestructuredMember extends SyntaxTreeNode {
+  modifier!: Token<'let'> | Token<'let'> | null;
+  name!: IdentifierToken;
+  
+  newModifier!: Token<'let'> | Token<'let'> | null;
+  newName!: IdentifierToken | null;
+  
+  type!: Expr | DestructuredMember | null;
+  
+  static rule: Caten = new Caten(
+    new Or(
+      new Caten(),
+      new Match(false, 'modifier', token('let')),
+      new Match(false, 'modifier', token('asn')),
+    ),
+    new Match(false, 'name', token('identifier')),
+    
+    new Maybe(
+      new Caten(
+        token('as'),
+        new Or(
+          new Match(false, 'newModifier', token('let')),
+          new Match(false, 'newModifier', token('asn')),
+        ),
+        new Match(false, 'newName', token('identifier')),
+      ),
+    ),
+    
+    new Or(
+      new Caten(
+        token(':'),
+        new Match(false, 'type', ExprRung),
+      ),
+      matchTypeDestructuredMembers,
+    ),
+  );
+}
+
+export class DestructuredMembers extends SyntaxTreeNode {
+  members!: DestructuredMember[];
+  
+  static rule = new Caten(
+    token('{'),
+    new Repeat(
+      new Match(true, 'members', DestructuredMember),
+      {
+        delimiter: token(','),
+        trailingDelimiter: true,
+      },
+    ),
+    token('}'),
+  );
+}
+
+matchTypeDestructuredMembers.match = DestructuredMembers;
+
+export class With extends SyntaxTreeNode {
+  expr!: BecomesOrLower;
+  members!: DestructuredMembers;
+  
+  static rule = new Caten(
+    new Match(false, 'left', BecomesRung),
+    token('with'),
+    new Match(false, 'members', DestructuredMembers),
+  );
+}
+
 export class Conditional extends SyntaxTreeNode {
-  conditional!: BecomesOrLower;
+  conditional!: WithOrLower;
   ifPos!: Expr | null;
   ifNeg!: ConditionalOrLower | null;
   
   static rule = new Caten(
-    new Match(false, 'cond', UnionRung),
+    new Match(false, 'cond', WithRung), // TODO this was Union but was supposed to be Becomes before With was added
     new Or(
       new Caten(
         token('then'), // Alternatively: ?
@@ -530,6 +615,7 @@ matchValueComparison.match = Comparison;
 matchValueIntersection.match = Intersection;
 matchValueUnion.match = Union;
 matchValueBecomes.match = Becomes;
+matchValueWith.match = With;
 matchValueConditional.match = Conditional;
 matchValueAssignment.match = Assignment;
 matchValueReturn.match = Return;

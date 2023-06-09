@@ -12,7 +12,7 @@ class Param extends SyntaxTreeNode {
   name!: IdentifierToken;
   type!: Expr;
   
-  static rule = new Caten(
+  static rule = new Caten( // TODO destructuring: "let x({ a }) := a"
     new Match(false, 'name', token('identifier')),
     new Maybe(
       new Caten(

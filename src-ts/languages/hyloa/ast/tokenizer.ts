@@ -3,6 +3,7 @@ import { Tokenizer as tokenizers } from 'lr-parser-typescript';
 export type TokenString = typeof tokenStringArray[number];
 export const tokenStringArray = [
   'identifier',
+  'private',
   'import',
   'return',
   'static',
@@ -17,6 +18,7 @@ export const tokenStringArray = [
   'text',
   'then',
   'with',
+  'asn',
   'All',
   'let',
   '<->',

@@ -1,4 +1,4 @@
-import { SyntaxTreeNode, Caten, IdentifierToken, Match, Maybe, Repeat } from 'lr-parser-typescript';
+import { SyntaxTreeNode, Caten, IdentifierToken, Match, Maybe, Repeat, Token } from 'lr-parser-typescript';
 import { Expr } from './expressions.js';
 
 import { token } from './tokenizer.js';
@@ -10,10 +10,16 @@ export class ClassMember extends SyntaxTreeNode {
   name!: IdentifierToken;
   type!: Expr;
   initializer!: Expr;
+  isPrivate!: Token<'private'> | null;
+  isStatic!: Token<'static'> | null;
   
-  // TODO
   static rule = new Caten(
-    new Maybe(token('static')),
+    new Maybe(
+      new Match(false, 'isPrivate', token('private')),
+    ),
+    new Maybe(
+      new Match(false, 'isStatic', token('static')),
+    ),
     token('identifier'),
     new Maybe(
       new Caten(

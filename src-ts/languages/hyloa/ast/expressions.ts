@@ -7,6 +7,7 @@ import {
   matchTypeExprRung as matchTypeExprRung1,
   matchBodyExprRung,
   matchDefaultArgExprRung,
+  matchParamsDestructuredMembers,
 } from "./let-declaration.js";
 import { token } from "./tokenizer.js";
 
@@ -643,6 +644,7 @@ matchValueExistentialQuantifier.match = ExistentialQuantifier;
 matchValueExprRung.match = ExprRung;
 
 matchMembersDestructuredMembers.match = DestructuredMembers;
+matchParamsDestructuredMembers.match = DestructuredMembers;
 matchTypeExprRung0.match = ExprRung;
 matchTypeExprRung1.match = ExprRung;
 matchBodyExprRung.match = ExprRung;

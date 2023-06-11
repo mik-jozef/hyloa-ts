@@ -69,7 +69,7 @@ export class Path {
   ) {}
   
   toString() {
-    return '/' + this.folders.map(f => f + '/') + (this.file || '');
+    return '/' + this.folders.map(f => f + '/').join('') + (this.file || '');
   }
 }
 
@@ -79,7 +79,7 @@ export class Path {
 // to open it.
 export class Folder {
   constructor(
-    // Should be without a trailing slash. Not part of Hyloa.
+    // The path should be without a trailing slash. Not part of Hyloa.
     private path: string,
     _: 'I solemnly swear I only call this in `hrt0.ts`',
   ) {}

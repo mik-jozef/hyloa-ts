@@ -1,7 +1,9 @@
 import { exit as nodeExit } from 'process';
+import { inspect } from 'util';
+
 
 export function exit(message: string, ...rest: unknown[]): never {
-  console.log(message, ...rest);
+  console.log(message, inspect(rest, { depth: null, colors: true }));
   
   nodeExit();
 }

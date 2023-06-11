@@ -1,4 +1,4 @@
-import { Target } from '../compile-targets/targets.js';
+import { NodeJS, Target, Web } from '../compile-targets/targets.js';
 import { Path } from '../utils/fs.js';
 import { JsonValidationError } from '../utils/json-validation-error.js';
 import { Import } from './import.js';
@@ -186,7 +186,7 @@ export class PublishedPackageId extends PackageId {
       
       // In case this is a record, the publishing command should
       // require the name of the registry.
-      publishTo: KebabCase | null | Record<KebabCase, PublishTo>,
+      publishTo: KebabCase | Record<KebabCase, PublishTo>,
       
       targets: Record<KebabCase, Target>,
       
@@ -208,9 +208,52 @@ export class PackageJson {
   
   constructor(
     public projectJson: ProjectJson | null,
-    args: unknown, // TODO a package.json-schema-satisfying object.
+    packageJsonObj: any, // TODO a package.json-schema-satisfying object.
   ) {
-    Object.assign(this, args);
+    this.defaultRegistry = packageJsonObj.defaultRegistry
+    this.registries = new Map(Object.entries(packageJsonObj.registries));
+    
+    this.publishTo = new Map(
+      Object.entries<any>(packageJsonObj.publishTo).map(
+        ([ key, { registry, scope, name, asPrivate } ]) => [ key, new PublishTo(registry, scope, name, asPrivate) ],
+      ),
+    );
+    
+    this.targets = new Map(
+      Object.entries<any>(packageJsonObj.targets).map(
+        ([ key, val]) => {
+          if (typeof val === 'string') {
+            switch (val) {
+              case 'web': return [ key, new Web() ];
+              case 'node-js': return [ key, new NodeJS() ];
+              default: throw new Error('Unimplemented: unknown target: ' + val);
+            }
+          }
+          
+          switch (val.targetType) {
+            case 'web': return [ key, new Web(val) ];
+            case 'node-js': return [ key, new NodeJS(val) ];
+            default: throw new Error('Unimplemented: unknown target: ' + val.targetType);
+          }
+        }
+      ),
+    );
+    
+    this.dependencies = initDeps(packageJsonObj.dependencies);
+    this.devDependencies = initDeps(packageJsonObj.devDependencies);
+    
+    function initDeps(depsJson: any) {
+      return new Map(
+        Object.entries<any>(depsJson).map(
+          ([ key, val ]) => [
+            key,
+            new Map(Object.entries<any>(val).map(
+              ([ keyInner, valInner ]) => [ keyInner, new Version(valInner)],
+            )),
+          ],
+        ),
+      );
+    }
   }
   
   getDefaultRegistryUrl(): string | null {
@@ -252,16 +295,7 @@ export class PackageJson {
   static fromJson(projectJson: ProjectJson | null, json: string):
     PackageJson | JsonValidationError<never>
   {
-    const parsed = JSON.parse(json);
-    
-    return new PackageJson(projectJson, {
-      defaultRegistry: parsed.defaultRegistry,
-      registries: new Map(Object.entries(parsed.registries)),
-      publishTo: 'TODO',
-      targets: 'TODO',
-      dependencies: 'TODO',
-      devDependencies: 'TODO',
-    });
+    return new PackageJson(projectJson, JSON.parse(json));
   }
 }
 

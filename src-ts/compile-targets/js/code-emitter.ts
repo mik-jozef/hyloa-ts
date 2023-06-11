@@ -2,6 +2,8 @@
 // syntax trees and then serialize them, wouldn't it?
 // That would make it easier to have options like
 // pretty print or not
+// TODO this is why Hyloa's standard library should
+// contain its own syntax tree representation.
 
 export abstract class CodeEmitter {
   abstract indent(extraIndent: string): CodeEmitter;

@@ -1,6 +1,7 @@
-import { LocalPackageId } from "../../languages/package";
+import { PackageAny } from "../../languages/package";
 import { Folder, Path } from "../../utils/fs";
 import { Workspace } from "../../workspace";
+import { NodeJs, Web } from "../targets";
 import { TopLevelCodeEmitter } from "./code-emitter";
 import { ModuleEmitter } from "./module-compiler";
 
@@ -27,17 +28,19 @@ ${script}
 </html>
 `;
 
-export async function compile(
+export async function compileToJs(
   outFolder: Folder,
-  file: Path,
-  _workspace: Workspace,
-  _packageId: LocalPackageId,
-  _targetName: string,
+  outFilePath: Path,
+  workspace: Workspace,
+  pkg: PackageAny,
+  target: Web | NodeJs,
 ):
   Promise<void>
 {
-  const emitter = new TopLevelCodeEmitter('  ');
+  const emitter = new TopLevelCodeEmitter(target.constructor === Web ? '  ' : '');
   const moduleEmitterSet = new Set<ModuleEmitter>();
+  
+  const mainModule = pkg.modules.get('/main.hyloa');
   
   // TODO create emitters.
   
@@ -51,5 +54,5 @@ export async function compile(
     moduleEmitter.emitInitializers();
   }
   
-  outFolder.writeFile(file, outFileTemplate(emitter.getCode()));
+  outFolder.writeFile(outFilePath, outFileTemplate(emitter.getCode()));
 }

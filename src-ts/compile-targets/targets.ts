@@ -1,30 +1,32 @@
-import { LocalPackageId } from "../languages/package";
+import { PackageAny } from "../languages/package";
 import { Folder, Path } from "../utils/fs.js";
 import { Workspace } from "../workspace";
-import { compile } from "./web/.js";
+import { compileToJs } from "./js/compileToJs.js";
 
 
 export abstract class Target {
+  static targetType: string;
+  
   abstract compile(
     outFolder: Folder,
     workspace: Workspace,
-    packageId: LocalPackageId,
-    targetName: string,
+    pkg: PackageAny,
   ): Promise<void>;
 }
 
 export class Web extends Target {
+  static targetType: 'web' = 'web';
+  
   constructor(
-    public outFilePath = new Path([ 'local' ], 'out.html' ),
+    public outFilePath = new Path([], 'out.html' ),
   ) { super(); }
   
   async compile(
     outFolder: Folder,
     workspace: Workspace,
-    packageId: LocalPackageId,
-    targetName: string,
+    pkg: PackageAny,
   ): Promise<void> {
-    return compile(outFolder, this.outFilePath, workspace, packageId, targetName);
+    return compileToJs(outFolder, this.outFilePath, workspace, pkg, this);
   }
 }
 
@@ -33,6 +35,8 @@ type NodeRawAll = Pick<NodeJs, 'version'>;
 type NodeRaw = Partial<NodeRawAll>;
 
 export class NodeJs extends Target {
+  static targetType: 'node-js' = 'node-js';
+  
   version: '18' = '18';
   outFilePath = new Path([ 'local' ], 'out.mjs' );
   
@@ -43,12 +47,11 @@ export class NodeJs extends Target {
   }
   
   compile(
-    _outFolder: Folder,
-    _workspace: Workspace,
-    _packageId: LocalPackageId,
-    _targetName: string,
+    outFolder: Folder,
+    workspace: Workspace,
+    pkg: PackageAny,
   ): Promise<void> {
-    throw new Error("Method not implemented.");
+    return compileToJs(outFolder, this.outFilePath, workspace, pkg, this);
   }
 }
 
@@ -65,3 +68,10 @@ export class NodeJs extends Target {
   class Amd64 {}
   class Avr {}
 /*/
+
+export const targets = {
+  [Web.targetType]: Web,
+  [NodeJs.targetType]: NodeJs,
+};
+
+export type TargetType = keyof typeof targets;

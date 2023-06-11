@@ -290,6 +290,7 @@ export class Workspace {
 
   async loadPath(path: ModulePathAny, loadedFrom: ModulePathAny, loadedAt: SrcRange): Promise<ModuleLoadTimeError[]>
   async loadPath(path: ModulePathAny, loadedFrom: null, loadedAt: null): Promise<ModuleLoadTimeError[]>
+  async loadPath(path: ModulePathAny): Promise<ModuleLoadTimeError[]>
 
   // If called multiple times, the subsequent calls will return an empty array.
   async loadPath(
@@ -390,17 +391,38 @@ export class Workspace {
   ) {
     // TODO type checking and what not.
   }
-
+  
+  // A "helper" function so that the consumers of Workspace
+  // do not have to make several calls for simple use cases.
   async compileProgram(
-    _outFolder: Folder,
+    outFolder: Folder,
     projectName: string,
     packageName: string,
-    _targetName: string,
+    targetName: string,
   ) {
-    await this.loadPackage(new LocalPackageId(projectName, packageName));
-
-    // TODO
-    // target.compile(outFolder, this.program);
+    const maybeError = await this.loadProject(projectName);
+    
+    if (maybeError) return maybeError;
+    
+    const pkg =
+      await this.loadPackage(new LocalPackageId(projectName, packageName));
+    
+    if (!(pkg instanceof Package)) return pkg;
+    
+    const target = pkg.packageJson.targets.get(targetName) ?? null;
+    console.log('asdf')
+    if (!target) {
+      // TODO
+      exit('Unimplemented: unknown target name.', projectName, packageName, targetName);
+    }
+    
+    const errors = await this.loadPath(new ModulePath(pkg.id, [], 'main.hyloa'));
+    
+    if (errors.length === 0) {
+      target.compile(outFolder, this, pkg);
+    }
+    
+    return errors;
   }
 
   // TODO some api to interact with the code, eg. read variables,
@@ -408,6 +430,8 @@ export class Workspace {
   // Also a parameterless emit overload that returns the exported
   // contents of the main module.
 
+  // A "helper" function so that the consumers of Workspace
+  // do not have to make several calls for simple use cases.
   // Args will by type-checked against the parameters of the `entrypoints` class
   async runProgram(
     _projectName: string,

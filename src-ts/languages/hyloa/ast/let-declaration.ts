@@ -11,6 +11,7 @@ export const matchBodyExprRung = new Match(true, 'body', null!);
 class Param extends SyntaxTreeNode {
   name!: IdentifierToken;
   type!: Expr;
+  defaultArg!: Expr;
   
   static rule = new Caten( // TODO destructuring: "let x({ a }) := a"
     new Match(false, 'name', token('identifier')),
@@ -60,6 +61,8 @@ export class LetDeclarationHead extends SyntaxTreeNode {
   );
 }
 
+// TODO add param isClassMember which removes the let token
+// and adds colons at the end unless ending with '}'.
 export class LetDeclaration extends SyntaxTreeNode {
   head!: LetDeclarationHead;
   body!: (Expr | LetDeclarationHead)[];

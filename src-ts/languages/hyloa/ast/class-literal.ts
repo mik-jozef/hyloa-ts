@@ -1,17 +1,15 @@
-import { SyntaxTreeNode, Caten, IdentifierToken, Match, Maybe, Repeat, Token } from 'lr-parser-typescript';
-import { Expr } from './expressions.js';
+import { SyntaxTreeNode, Caten, IdentifierToken, Match, Maybe, Or, Repeat, Token } from 'lr-parser-typescript';
 
 import { token } from './tokenizer.js';
+import { LetDeclaration, LetDeclarationHead } from './let-declaration.js';
 
 
 export const matchTypeExprRung = new Match(false, 'type', null!);
 
 export class ClassMember extends SyntaxTreeNode {
-  name!: IdentifierToken;
-  type!: Expr;
-  initializer!: Expr;
   isPrivate!: Token<'private'> | null;
   isStatic!: Token<'static'> | null;
+  declaration!: LetDeclaration | LetDeclarationHead;
   
   static rule = new Caten(
     new Maybe(
@@ -20,12 +18,9 @@ export class ClassMember extends SyntaxTreeNode {
     new Maybe(
       new Match(false, 'isStatic', token('static')),
     ),
-    token('identifier'),
-    new Maybe(
-      new Caten(
-        token(':'),
-        matchTypeExprRung,
-      ),
+    new Or(
+      new Match(false, 'declaration', LetDeclaration),
+      new Match(false, 'declaration', LetDeclarationHead),
     ),
   );
 }
@@ -43,7 +38,10 @@ export class ClassLiteral extends SyntaxTreeNode {
     new Maybe(new Match(false, 'constructorName', token('identifier'))),
     token('{'),
     new Repeat(
-      new Match(true, 'members', ClassMember)
+      new Caten(
+        new Match(true, 'members', ClassMember),
+        token(';'),
+      ),
     ),
     token('}'),
   );

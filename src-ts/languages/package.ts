@@ -194,12 +194,8 @@ export class PublishedPackageId extends PackageId {
       devDependencies: Record<PublishedPackage.Id, Dependency>,
     }
   ```
-  
-  Note the file MUST NOT contain the package version.
-  Let's uphold the single source of truth principle here.
-  The version field does not belong here.
 /*/
-export class PackageJson { // TODO replace plurals with `make[TypeName]`
+export class PackageJson {
   defaultRegistry: string | null = null;
   registries = new Map<string, string>();
   

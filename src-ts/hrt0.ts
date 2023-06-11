@@ -47,19 +47,19 @@ function createWorkspace() {
   );
 }
 
-function compileCommandFn() {
+async function compileCommandFn() {
   if (args.length !== 4) exit('Expected four args. Try `hyloa help compile`.');
   
   const [ outFolderPathArg, projectName, packageName, targetName ] =
     args as [ string, string, string, string ];
   
-  const outFolderPath = outFolderPathArg.match(/^@folder\((?<path>[\w/.-]*)\)$/)?.groups?.path
+  const outFolderPath = outFolderPathArg.match(/^@folder\[(?<path>[\w/.-]*)\]$/)?.groups?.path
   
   if (outFolderPath === undefined) {
     exit(`Path must be a folder (eg. \`@folder(out)\`), instead got: ${outFolderPathArg}`);
   }
   
-  createWorkspace().compileProgram(
+  const errors = await createWorkspace().compileProgram(
     new Folder(
       outFolderPath,
       'I solemnly swear I only call this in `hrt0.ts`',
@@ -68,6 +68,10 @@ function compileCommandFn() {
     packageName,
     targetName,
   );
+  
+  if (!Array.isArray(errors) || 0 <= errors.length) {
+    exit('Error(s) found during compilation:', errors);
+  }
 }
 
 async function initWorkspace(): Promise<never> {
@@ -235,11 +239,11 @@ const commands = fixCommandMapType({
     // TODO if inside a project/package, don't require their names.
     args: 'hyloa compile (outFolderPath) (projectName) (packageName) (targetName)',
     description: ''
-     + 'Compiles a package.\n.'
-     + '\n.'
-     + 'The command expects to be called from the workspace folder.\n.'
-     + '\n.'
-     + 'Example usage: `hyloa compile @folder(out/foobar) foo bar web`\n.'
+     + 'Compiles a package.\n'
+     + '\n'
+     + 'The command expects to be called from the workspace folder.\n'
+     + '\n'
+     + 'Example usage: `hyloa compile @folder(out/foobar) foo bar web`\n'
      ,
   },
   help: {

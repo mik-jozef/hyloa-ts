@@ -46,7 +46,7 @@ export class HyloaImportAst extends ImportAst {
   parsedPath: ParsedPath | null;
   
   isExternalImport(): this is ExternalImportAst {
-    return this.parsedPath === null;
+    return this.parsedPath !== null;
   }
   
   constructor(obj: Raw<HyloaImportAst>) {

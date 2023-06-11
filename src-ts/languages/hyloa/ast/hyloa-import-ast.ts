@@ -6,6 +6,8 @@ import { ParsedPath } from "../../module.js";
 import { token } from "./tokenizer.js";
 
 
+export const matchMembersDestructuredMembers = new Match(false, 'members', null!);
+
 /*/
   Example imports. A file must have an extension, a folder
   must not.
@@ -107,7 +109,12 @@ export class HyloaImportAst extends ImportAst {
       ),
     ),
     
-    // TODO optional destructuring.
+    new Maybe(
+      new Caten(
+        token('with'),
+        matchMembersDestructuredMembers,
+      ),
+    ),
   );
   
   private parsePath(path: string): ParsedPath | null {

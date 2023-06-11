@@ -1,6 +1,7 @@
 import { Caten, IdentifierToken, Match, Maybe, Or, Repeat, SyntaxTreeNode, Token } from "lr-parser-typescript";
 
 import { ClassLiteral, matchTypeExprRung as matchTypeExprRung0 } from "./class-literal.js";
+import { matchMembersDestructuredMembers } from "./hyloa-import-ast.js";
 import {
   LetDeclaration,
   matchTypeExprRung as matchTypeExprRung1,
@@ -489,6 +490,7 @@ export class DestructuredMember extends SyntaxTreeNode {
     ),
     
     new Or(
+      new Caten(),
       new Caten(
         token(':'),
         new Match(false, 'type', ExprRung),
@@ -640,6 +642,7 @@ matchValueUniversalQuantifer.match = UniversalQuantifier;
 matchValueExistentialQuantifier.match = ExistentialQuantifier;
 matchValueExprRung.match = ExprRung;
 
+matchMembersDestructuredMembers.match = DestructuredMembers;
 matchTypeExprRung0.match = ExprRung;
 matchTypeExprRung1.match = ExprRung;
 matchBodyExprRung.match = ExprRung;

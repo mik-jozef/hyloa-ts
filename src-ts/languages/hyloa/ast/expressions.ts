@@ -22,6 +22,7 @@ const matchValueMemberAccess = new Match(false, 'value', null!);
 const matchValueNegation = new Match(false, 'value', null!);
 const matchValueInverse = new Match(false, 'value', null!);
 const matchValueAwait = new Match(false, 'value', null!);
+const matchValueNowait = new Match(false, 'value', null!);
 const matchValueLeftUnaryPrefix = new Match(false, 'value', null!);
 const matchValueMul = new Match(false, 'value', null!);
 const matchValueDiv = new Match(false, 'value', null!);
@@ -101,6 +102,7 @@ export class LeftUnaryOpsRung extends SyntaxTreeNode {
     matchValueNegation,
     matchValueInverse,
     matchValueAwait,
+    matchValueNowait,
     matchValueLeftUnaryPrefix,
     new Match( false, 'value', BottomRung ),
   );
@@ -352,6 +354,15 @@ export class Await extends SyntaxTreeNode {
   
   static rule = new Caten(
     token('await'),
+    new Match(false, 'expr', LeftUnaryOpsRung),
+  );
+}
+
+export class Nowait extends SyntaxTreeNode {
+  expr!: LeftUnaryOpsOrLower;
+  
+  static rule = new Caten(
+    token('nowait'),
     new Match(false, 'expr', LeftUnaryOpsRung),
   );
 }
@@ -626,6 +637,7 @@ matchValueTypeArguments.match = TypeArguments;
 matchValueNegation.match = Negation;
 matchValueInverse.match = Inverse;
 matchValueAwait.match = Await;
+matchValueNowait.match = Nowait;
 matchValueLeftUnaryPrefix.match = LeftUnaryPrefix;
 matchValueMul.match = Mul;
 matchValueDiv.match = Div;

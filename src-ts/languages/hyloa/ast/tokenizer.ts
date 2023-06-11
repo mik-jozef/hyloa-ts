@@ -8,6 +8,7 @@ export const tokenStringArray = [
   'return',
   'static',
   'thelse',
+  'nowait',
   'number',
   'await',
   'class',

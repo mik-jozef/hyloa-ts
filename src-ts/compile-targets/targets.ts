@@ -31,16 +31,16 @@ export class Web extends Target {
 }
 
 
-type NodeRawAll = Pick<NodeJs, 'version'>;
+type NodeRawAll = Pick<NodeJS, 'version'>;
 type NodeRaw = Partial<NodeRawAll>;
 
-export class NodeJs extends Target {
+export class NodeJS extends Target {
   static targetType: 'node-js' = 'node-js';
   
   version: '18' = '18';
   outFilePath = new Path([ 'local' ], 'out.mjs' );
   
-  constructor(options: NodeRaw) {
+  constructor(options: NodeRaw = {}) {
     super();
     
     Object.assign(this, options);
@@ -71,7 +71,7 @@ export class NodeJs extends Target {
 
 export const targets = {
   [Web.targetType]: Web,
-  [NodeJs.targetType]: NodeJs,
+  [NodeJS.targetType]: NodeJS,
 };
 
 export type TargetType = keyof typeof targets;

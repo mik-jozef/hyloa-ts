@@ -39,7 +39,9 @@ export abstract class ImportAst extends SyntaxTreeNode {
   /*/
   abstract importKeyword: SrcRange;
   
-  abstract isExternalImport(): this is ExternalImportAst;
+  isExternalImport(): this is ExternalImportAst {
+    return this.parsedPath !== null;
+  }
 }
 
 export type ExternalImportAst = ImportAst & { parsedPath: ParsedPath };

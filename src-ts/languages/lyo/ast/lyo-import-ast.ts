@@ -27,10 +27,6 @@ export class LyoImportAst extends ImportAst {
   path: string;
   parsedPath: ParsedPath | null;
   
-  isExternalImport(): this is ExternalImportAst {
-    return this.parsedPath === null;
-  }
-  
   constructor(obj: Raw<LyoImportAst>) {
     super(obj);
     

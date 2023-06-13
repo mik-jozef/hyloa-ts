@@ -45,10 +45,6 @@ export class HyloaImportAst extends ImportAst {
   path: string;
   parsedPath: ParsedPath | null;
   
-  isExternalImport(): this is ExternalImportAst {
-    return this.parsedPath !== null;
-  }
-  
   constructor(obj: Raw<HyloaImportAst>) {
     super(obj);
     
@@ -88,18 +84,21 @@ export class HyloaImportAst extends ImportAst {
             ),
           ),
           token('.'),
-          new Repeat(token('..'), {
+          token('..'),
+          /*new Repeat(token('..'), {
             delimiter: token('/'),
             lowerBound: 1,
-          }),
+          }),*/
         ),
         new Maybe(
           new Caten(
-            token('$1'),
             new Repeat(
               token('/'),
               {
-                delimiter: new Match(false, '_unused-folder', KebabCase),
+                delimiter: new Or(
+                  new Match(false, '_unused-folder', KebabCase),
+                  new Match(false, '_unused-folder', token('..')),
+                ),
                 trailingDelimiter: new Caten(token('identifier'), token('.'), token('identifier')),
                 lowerBound: 1,
               }

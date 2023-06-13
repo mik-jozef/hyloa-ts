@@ -39,6 +39,7 @@ import { FileSystemProvider, ModuleProvider } from './module-provider.js';
 import { exit } from './utils/exit.js';
 import { Folder } from "./utils/fs.js";
 import { JsonValidationError } from './utils/json-validation-error.js';
+import { Target } from './compile-targets/targets.js';
 
 
 const __filename = fileURLToPath(import.meta.url);
@@ -398,7 +399,7 @@ export class Workspace {
     outFolder: Folder,
     projectName: string,
     packageName: string,
-    targetName: string,
+    target: string | Target,
   ) {
     const maybeError = await this.loadProject(projectName);
     
@@ -409,11 +410,15 @@ export class Workspace {
     
     if (!(pkg instanceof Package)) return pkg;
     
-    const target = pkg.packageJson.targets.get(targetName) ?? null;
-    console.log('asdf')
-    if (!target) {
-      // TODO
-      exit('Unimplemented: unknown target name.', projectName, packageName, targetName);
+    if (!(target instanceof Target)) {
+      const tgt = pkg.packageJson.targets.get(target) ?? null;
+      
+      if (!tgt) {
+        // TODO
+        exit('Unimplemented: unknown target name.', projectName, packageName, target);
+      }
+      
+      target = tgt;
     }
     
     const errors = await this.loadPath(new ModulePath(pkg.id, [], 'main.hyloa'));

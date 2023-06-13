@@ -15,6 +15,7 @@ import { ExecutionContext } from './runtime/execution-context.js'
 import { Repl } from './repl.js'
 import { Folder } from './utils/fs.js'
 import { isKebabName } from './utils/is-kebab-name.js';
+import { Target, targets } from './compile-targets/targets.js';
 
 
 /*/
@@ -53,10 +54,22 @@ async function compileCommandFn() {
   const [ outFolderPathArg, projectName, packageName, targetName ] =
     args as [ string, string, string, string ];
   
-  const outFolderPath = outFolderPathArg.match(/^@folder\[(?<path>[\w/.-]*)\]$/)?.groups?.path
+  const outFolderPath = outFolderPathArg.match(/^@folder\[(?<path>[\w/.-]*)\]$/)?.groups?.path;
   
   if (outFolderPath === undefined) {
     exit(`Path must be a folder (eg. \`@folder(out)\`), instead got: ${outFolderPathArg}`);
+  }
+  
+  const targetRef = targetName.match(/^@target\[(?<target>[\w/.-]*)\]$/)?.groups?.target;
+  
+  let target: string | Target = targetName;
+  
+  if (targetRef !== undefined) {
+    if(!(targetRef in targets)) {
+      exit(`Target "${targetRef}" does not exist.`);
+    }
+    
+    target = new targets[targetRef as keyof typeof targets]();
   }
   
   const errors = await createWorkspace().compileProgram(
@@ -66,7 +79,7 @@ async function compileCommandFn() {
     ),
     projectName,
     packageName,
-    targetName,
+    target,
   );
   
   if (!Array.isArray(errors) || 0 <= errors.length) {
@@ -89,7 +102,7 @@ const packageMainModule =
   Entrypoint to the application.
 ///
 
-import 'stdlib/io' as { WriteStream };
+import stdlib $1/io with { WriteStream };
 
 lib-export class makeMain {
   out: WriteStream;
@@ -126,7 +139,7 @@ async function initPackage(projectName: string): Promise<string> {
         defaultRegistry: null,
         registries: {},
         
-        publishTo: null,
+        publishTo: {},
         
         targets: {},
         

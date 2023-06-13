@@ -1,9 +1,9 @@
-import { PackageAny } from "../../languages/package";
-import { Folder, Path } from "../../utils/fs";
-import { Workspace } from "../../workspace";
-import { NodeJs, Web } from "../targets";
-import { TopLevelCodeEmitter } from "./code-emitter";
-import { ModuleEmitter } from "./module-compiler";
+import { PackageAny } from "../../languages/package.js";
+import { Folder, Path } from "../../utils/fs.js";
+import { Workspace } from "../../workspace.js";
+import { NodeJS, Web } from "../targets.js";
+import { TopLevelCodeEmitter } from "./code-emitter.js";
+import { ModuleEmitter } from "./module-compiler.js";
 
 
 const outFileTemplate = (script: string) =>
@@ -33,7 +33,7 @@ export async function compileToJs(
   outFilePath: Path,
   workspace: Workspace,
   pkg: PackageAny,
-  target: Web | NodeJs,
+  target: Web | NodeJS,
 ):
   Promise<void>
 {

@@ -29,7 +29,7 @@ export class TopLevelCodeEmitter extends CodeEmitter {
   emit(code: string, extraIndent = '') {
     if (code === '') return this;
     
-    const indent = this.indent + extraIndent;
+    const indent = this.indentNow + extraIndent;
     
     if (this.isAtEmptyLine) {
       this.emittedCode.push(indent); // Yes, even if it stays empty.

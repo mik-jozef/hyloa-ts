@@ -6,7 +6,7 @@ import { TopLevelCodeEmitter } from "./code-emitter.js";
 import { ModuleEmitter } from "./module-compiler.js";
 
 
-const outFileTemplate = (script: string) =>
+const webFileTemplate = (script: string) =>
 `<!doctype html>
 
 <html>
@@ -27,6 +27,8 @@ ${script}
 </body>
 </html>
 `;
+
+const nodeJsFileTemplate = (script: string) => script;
 
 export async function compileToJs(
   outFolder: Folder,
@@ -54,5 +56,7 @@ export async function compileToJs(
     moduleEmitter.emitInitializers();
   }
   
-  outFolder.writeFile(outFilePath, outFileTemplate(emitter.getCode()));
+  const fileTemplate = target.constructor === Web ? webFileTemplate : nodeJsFileTemplate;
+  
+  outFolder.writeFile(outFilePath, fileTemplate(emitter.getCode()));
 }

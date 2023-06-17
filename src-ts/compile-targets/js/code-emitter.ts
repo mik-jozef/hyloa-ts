@@ -61,7 +61,7 @@ export class TopLevelCodeEmitter extends CodeEmitter {
   }
   
   getCode(): string {
-    return this.emittedCode.join();
+    return this.emittedCode.join('');
   }
 }
 

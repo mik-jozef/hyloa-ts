@@ -38,7 +38,7 @@ export class NodeJS extends Target {
   static targetType: 'node-js' = 'node-js';
   
   version: '18' = '18';
-  outFilePath = new Path([ 'local' ], 'out.mjs' );
+  outFilePath = new Path([], 'out.mjs' );
   
   constructor(options: NodeRaw = {}) {
     super();

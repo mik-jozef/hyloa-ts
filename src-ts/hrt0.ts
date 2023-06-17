@@ -82,7 +82,7 @@ async function compileCommandFn() {
     target,
   );
   
-  if (!Array.isArray(errors) || 0 <= errors.length) {
+  if (!Array.isArray(errors) || 0 < errors.length) {
     exit('Error(s) found during compilation:', errors);
   }
 }

@@ -1,7 +1,7 @@
 import { exit } from '../utils/exit.js';
 import { Path } from '../utils/fs.js';
 import { Import, ImportAst } from './import.js';
-import { LocalPackageId, PackageId, PackageJson, PublishedPackageId } from './package.js';
+import { LibraryId, LocalPackageId, PackageId, PackageJson, PublishedPackageId } from './package.js';
 import { SyntaxTreeNode as makeSyntaxTreeNode } from 'lr-parser-typescript';
 
 
@@ -21,10 +21,11 @@ export type ParsedPath = {
 
 export type LocalModulePath = ModulePath<LocalPackageId>
 export type PublishedModulePath = ModulePath<PublishedPackageId>
-export type ModulePathAny = ModulePath<PackageId>;
+export type ModulePathPackage = ModulePath<PackageId>;
+export type ModulePathLibrary = ModulePath<LibraryId>;
 
 /*/
-  A ModulePath uniquely identifies a module (local or library)
+  A ModulePath uniquely identifies a module (local or published)
   in a workspace. Paths must be in snake-case.
   
   A file must have an extension, a folder must not.
@@ -33,9 +34,11 @@ export type ModulePathAny = ModulePath<PackageId>;
   or qualified (`[package-id]/foo/bar.js`), depending on the
   package ID.
 /*/
-export class ModulePath<Pid extends PackageId> {
+export class ModulePath<Pid extends LibraryId> {
   folderArr: string[];
   file: string | null;
+  
+  isPackagePath(): this is ModulePathPackage { return this.packageId.isPackageId() }
   
   extension(): string | null {
     return this.file?.substring(this.file.lastIndexOf('.') + 1) ?? null;
@@ -79,18 +82,18 @@ export class ModulePath<Pid extends PackageId> {
   }
   
   // The returned path assumes the workspace is the root folder.
-  toFsPath(): Path {
+  toFsPath(this: ModulePath<Pid & PackageId>): Path {
     return this.packageId.toFsPath(this.folderArr, this.file);
   }
   
   // Returns true iff `this` and `p` represent the same module.
-  equals(p: ModulePathAny): boolean {
+  equals(p: ModulePathLibrary): boolean {
     return this.packageId.equals(p.packageId)
       && this.folderArr.every((folder, i) => p.folderArr[i] === folder)
       && this.file === p.file;
   }
   
-  copy(): ModulePathAny {
+  copy(): ModulePathLibrary {
     return new ModulePath(this.packageId, [ ...this.folderArr ], this.file);
   }
 }
@@ -109,7 +112,7 @@ export class Module {
   
   constructor(
     public ast: ModuleAst,
-    public path: ModulePathAny,
+    public path: ModulePathLibrary,
     packageJson: PackageJson,
   ) {
     this.imports = ast.imports.map(impr => new Import(impr, path, packageJson))

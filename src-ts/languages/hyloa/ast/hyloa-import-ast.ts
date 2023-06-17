@@ -117,10 +117,10 @@ export class HyloaImportAst extends ImportAst {
   );
   
   private parsePath(path: string): ParsedPath | null {
-    if (path[0] !== '@') return null;
+    if ([ '/', '.' ].includes(path[0]!)) return null;
     
     const match = path.match(
-      /^@(?:(?<registry>[a-z\-]+)\s+)(?:(?<scope>[a-z\-]+):)?(?<name>[a-z\-]+)(?:#(?<versionAlias>[a-z\-]+))?(?<rest>.*)/,
+      /^(?:@(?<registry>[a-z\-]+)\s+)?(?:(?<scope>[a-z\-]+):)?(?<name>[a-z\-]+)(?:#(?<versionAlias>[a-z\-]+))?(?<rest>.*)/,
     );
     
     if (!match) exit('Programmer error - cannot match package reference from:', this);

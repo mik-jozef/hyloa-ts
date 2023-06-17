@@ -1,7 +1,7 @@
 import { SrcPosition, SrcPosition as srcPositions } from "lr-parser-typescript";
 import { JsonValidationError } from "../utils/json-validation-error";
 
-import { ModulePathAny, ParsedPath } from "./module";
+import { ModulePathPackage, ParsedPath } from "./module";
 import { PackageId } from "./package";
 
 
@@ -83,7 +83,7 @@ export class UnusedModule extends ProgramError {
   static isWarning = true;
   
   constructor(
-    public path: ModulePathAny,
+    public path: ModulePathPackage,
   ) { super(); }
   
   toString(): string {
@@ -93,7 +93,7 @@ export class UnusedModule extends ProgramError {
 
 
 export abstract class SourceCodeError extends ProgramError {
-  abstract inModule: ModulePathAny;
+  abstract inModule: ModulePathPackage;
   abstract at: SrcRange;
   
   // TODO add this to `lr-parser-typescript`.
@@ -126,7 +126,7 @@ export type ModuleLoadTimeError =
 
 export class ParseError extends ModuleLoadTimeSourceCodeError {
   constructor(
-    public inModule: ModulePathAny,
+    public inModule: ModulePathPackage,
     public at: SrcRange,
     public whatever: unknown,
   ) { super(); }
@@ -144,7 +144,7 @@ export class ParseError extends ModuleLoadTimeSourceCodeError {
 
 export class MissingRegistry extends ModuleLoadTimeSourceCodeError {
   constructor(
-    public inModule: ModulePathAny,
+    public inModule: ModulePathPackage,
     public at: SrcRange,
     public dependency: ParsedPath,
   ) { super(); }
@@ -161,7 +161,7 @@ export class MissingRegistry extends ModuleLoadTimeSourceCodeError {
 
 export class UnknownDependency extends ModuleLoadTimeSourceCodeError {
   constructor(
-    public inModule: ModulePathAny,
+    public inModule: ModulePathPackage,
     public at: SrcRange,
     public dependency: ParsedPath,
   ) { super(); }
@@ -178,7 +178,7 @@ export class UnknownDependency extends ModuleLoadTimeSourceCodeError {
 
 export class UnknownVersionAlias extends ModuleLoadTimeSourceCodeError {
   constructor(
-    public inModule: ModulePathAny,
+    public inModule: ModulePathPackage,
     public at: SrcRange,
     public alias: string,
   ) { super(); }
@@ -193,12 +193,12 @@ export class UnknownVersionAlias extends ModuleLoadTimeSourceCodeError {
   }
 }
 
-export type ImportReference = [ ModulePathAny, SrcRange ];
+export type ImportReference = [ ModulePathPackage, SrcRange ];
 
 export abstract class ModuleLoadError extends ProgramError {
   abstract importReferences: ImportReference[];
   
-  abstract inModule: ModulePathAny;
+  abstract inModule: ModulePathPackage;
   
   static inNoAt(err: ModuleLoadError): string {
     return 'In ' + err.inModule.toString() + '\n';
@@ -210,7 +210,7 @@ export class ModuleNotFound extends ModuleLoadError {
   
   constructor(
     // The path of the file that could not be imported.
-    public inModule: ModulePathAny,
+    public inModule: ModulePathPackage,
     importReference: ImportReference | null = null,
   ) {
     super();
@@ -237,7 +237,7 @@ export class OtherModuleProviderError extends ModuleLoadError {
   
   constructor(
     // The path of the file that could not be imported.
-    public inModule: ModulePathAny,
+    public inModule: ModulePathPackage,
     public error: unknown,
     importReference: ImportReference | null = null,
   ) {
@@ -261,7 +261,7 @@ export class UnsupportedFileType extends ModuleLoadError {
   
   constructor(
     // The path of the file that could not be imported.
-    public inModule: ModulePathAny,
+    public inModule: ModulePathPackage,
     importReference: ImportReference | null = null,
   ) {
     super();
@@ -280,7 +280,7 @@ export class UnsupportedFileType extends ModuleLoadError {
 
 export class RunawayRelativePath extends ModuleLoadTimeSourceCodeError {
   constructor(
-    public inModule: ModulePathAny,
+    public inModule: ModulePathPackage,
     public at: SrcRange,
     public path: string,
   ) { super(); }

@@ -32,7 +32,7 @@ import { LyoModuleAst } from './languages/lyo/ast/lyo-module-ast.js';
 import { lyoTokenizer } from './languages/lyo/ast/tokenizer.js';
 import { SiresModuleAst } from './languages/sires/ast/sires-module-ast.js';
 import { siresTokenizer } from './languages/sires/ast/tokenizer.js';
-import { Module, ModuleAst, ModulePath, ModulePathAny } from './languages/module.js';
+import { Module, ModuleAst, ModulePath, ModulePathPackage } from './languages/module.js';
 import { LocalPackageId, Package, PackageAny, PackageId, PackageJson, PublishedPackage, PublishedPackageId } from './languages/package.js';
 import { Project, ProjectJson } from './languages/project.js';
 import { FileSystemProvider, ModuleProvider } from './module-provider.js';
@@ -116,7 +116,7 @@ export class Workspace {
   // and saves the promise to `discoveredPathMap`.
   // On subsequent calls with arguments that stringify to the
   // same string, the promise is returned.
-  private loadPathGuard(path: ModulePathAny):
+  private loadPathGuard(path: ModulePathPackage):
     Promise<ModuleLoadError | null> | LoadingResultFn
   {
     const pathString = path.toString();
@@ -242,8 +242,9 @@ export class Workspace {
   }
 
   // Assumes the package is loaded.
-  private async getModule(path: ModulePathAny, packageJson: PackageJson):
-    Promise<Module | ModuleLoadTimeError[]> {
+  private async getModule(path: ModulePathPackage, packageJson: PackageJson):
+    Promise<Module | ModuleLoadTimeError[]>
+  {
     const moduleSource = await this.moduleProvider.getModuleSource(path);
 
     if (moduleSource instanceof ModuleLoadError) {
@@ -269,7 +270,7 @@ export class Workspace {
   }
 
   // Assumes the package is already loaded.
-  private addModule(path: ModulePathAny, module: Module): void {
+  private addModule(path: ModulePathPackage, module: Module): void {
     if (path.packageId instanceof LocalPackageId) {
       const project = this.projectMap.get(path.packageId.projectName);
 
@@ -289,14 +290,14 @@ export class Workspace {
     }
   }
 
-  async loadPath(path: ModulePathAny, loadedFrom: ModulePathAny, loadedAt: SrcRange): Promise<ModuleLoadTimeError[]>
-  async loadPath(path: ModulePathAny, loadedFrom: null, loadedAt: null): Promise<ModuleLoadTimeError[]>
-  async loadPath(path: ModulePathAny): Promise<ModuleLoadTimeError[]>
+  async loadPath(path: ModulePathPackage, loadedFrom: ModulePathPackage, loadedAt: SrcRange): Promise<ModuleLoadTimeError[]>
+  async loadPath(path: ModulePathPackage, loadedFrom: null, loadedAt: null): Promise<ModuleLoadTimeError[]>
+  async loadPath(path: ModulePathPackage): Promise<ModuleLoadTimeError[]>
 
   // If called multiple times, the subsequent calls will return an empty array.
   async loadPath(
-    path: ModulePathAny,
-    loadedFrom: ModulePathAny | null = null,
+    path: ModulePathPackage,
+    loadedFrom: ModulePathPackage | null = null,
     loadedAt: SrcRange | null = null,
   ):
     Promise<ModuleLoadTimeError[]> {
@@ -324,7 +325,8 @@ export class Workspace {
 
     if (loadPackageError instanceof ProgramError) {
       loadPackageError instanceof ModuleLoadError
-        ? guard(loadPackageError) : guard(null);
+        ? guard(loadPackageError)
+        : guard(null);
 
       return [loadPackageError];
     }
@@ -362,22 +364,29 @@ export class Workspace {
           switch (importedPath) {
             case Import.missingDefaultRegistry:
               return [
-                new MissingRegistry(module.path, importKeyword, imported.ast.parsedPath!),
+                new MissingRegistry(module.path as ModulePathPackage, importKeyword, imported.ast.parsedPath!),
               ];
             case Import.runawayRelativePath:
               return [
-                new RunawayRelativePath(module.path, importKeyword, imported.ast.path),
+                new RunawayRelativePath(module.path as ModulePathPackage, importKeyword, imported.ast.path),
               ];
             case Import.unknownDependency:
               return [
-                new UnknownDependency(module.path, importKeyword, imported.ast.parsedPath!),
+                new UnknownDependency(module.path as ModulePathPackage, importKeyword, imported.ast.parsedPath!),
               ];
             case Import.unknownVersionAlias:
               return [
-                new UnknownVersionAlias(module.path, importKeyword, imported.ast.parsedPath!.versionAlias),
+                new UnknownVersionAlias(module.path as ModulePathPackage, importKeyword, imported.ast.parsedPath!.versionAlias),
               ];
             default:
-              return this.loadPath(importedPath, module.path, importKeyword);
+              return importedPath.isPackagePath()
+                ? this.loadPath(
+                    importedPath,
+                    // The standard library cannot import non-stlib modules.
+                    module.path as ModulePathPackage,
+                    importKeyword
+                  )
+                : [];
           }
         },
       ),

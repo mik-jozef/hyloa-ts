@@ -1,5 +1,5 @@
 import { ModuleNotFound, ModuleLoadError, OtherModuleProviderError, MissingProjectJson, ProjectJsonModuleProviderError } from './languages/errors.js';
-import { mainPath, ModulePathAny, ModulePath } from './languages/module.js';
+import { mainPath, ModulePathPackage, ModulePath } from './languages/module.js';
 import { LocalPackageId } from './languages/package.js';
 import { FileNotFoundError, Folder, Path } from './utils/fs.js';
 
@@ -16,7 +16,7 @@ export abstract class ModuleProvider {
     Everything that has a modulePath is a module, and that
     includes `package.json`.
   /*/
-  abstract getModuleSource(path: ModulePathAny): MaybePromise<string | ModuleLoadError>
+  abstract getModuleSource(path: ModulePathPackage): MaybePromise<string | ModuleLoadError>
   
   abstract getProjectJson(projectName: string): MaybePromise<string | MissingProjectJson | ProjectJsonModuleProviderError>
 }
@@ -26,7 +26,7 @@ export class FileSystemProvider implements ModuleProvider {
     public rootFolder: Folder,
   ) {}
   
-  async getModuleSource(modulePath: ModulePathAny): Promise<string | ModuleLoadError> {
+  async getModuleSource(modulePath: ModulePathPackage): Promise<string | ModuleLoadError> {
     const filePath = modulePath.toFsPath();
     const fileContent =  await this.rootFolder.readFile(filePath, 'utf8');
     
@@ -71,7 +71,7 @@ export class SingleModuleProvider implements ModuleProvider {
     public packageJson: string = SingleModuleProvider.defaultPackageJson,
   ) {}
   
-  getModuleSource(path: ModulePathAny): string | ModuleNotFound {
+  getModuleSource(path: ModulePathPackage): string | ModuleNotFound {
     /*/
       `package.hyloa.json` is only supported by file system
       providers, to avoid a potential conflict with npm's

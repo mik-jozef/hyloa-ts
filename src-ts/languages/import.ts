@@ -1,11 +1,11 @@
 import { SyntaxTreeNode } from "lr-parser-typescript";
 import { SrcRange } from "./errors.js";
-import { ModulePathAny, ModulePath, ParsedPath } from "./module.js";
+import { ModulePathLibrary, ModulePath, ParsedPath } from "./module.js";
 import { PackageJson } from "./package.js";
 
 
 type ImportedPath =
-  | ModulePathAny
+  | ModulePathLibrary
   | MissingDefaultRegistry
   | RunawayRelativePath
   | UnknownDependency
@@ -57,7 +57,7 @@ export class Import {
   
   constructor(
     public ast: ImportAst,
-    importingPath: ModulePathAny,
+    importingPath: ModulePathLibrary,
     packageJson: PackageJson, // Of the importing package.
   ) {
     if (ast.isExternalImport()) {
@@ -68,7 +68,7 @@ export class Import {
   }
   
   private resolveLocalImport(
-    importingPath: ModulePathAny,
+    importingPath: ModulePathLibrary,
     importedPath: string,
   ): ImportedPath {
     if (importedPath[0] === '/') return new ModulePath(importingPath.packageId, importedPath);

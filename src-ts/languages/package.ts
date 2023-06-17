@@ -66,11 +66,29 @@ export class PublishTo {
   ) {}
 }
 
-export abstract class PackageId {
-  abstract toFsPath(folderArr: string[], file: string | null): Path;
+export /* final */ abstract class LibraryId {
+  abstract equals(id: LibraryId): boolean;
   
-  abstract equals(id: PackageId): boolean;
+  isPackageId(): this is PackageId { return !(this instanceof StandardLibrary) }
 }
+
+// TODO toFsPath should be a standalone function
+export abstract class PackageId extends LibraryId {
+  abstract toFsPath(folderArr: string[], file: string | null): Path;
+}
+
+// Represents the standard library.
+export class StandardLibrary extends LibraryId {
+  toString() {
+    return 'stdlib';
+  }
+  
+  equals(id: LibraryId) {
+    return id instanceof StandardLibrary;
+  }
+}
+
+export const stlib = new StandardLibrary();
 
 /*/
   Local package IDs uniquely represent unpublished packages
@@ -268,10 +286,13 @@ export class PackageJson {
     
   ):
     | PublishedPackageId
+    | StandardLibrary
     | typeof Import.missingDefaultRegistry
     | typeof Import.unknownDependency
     | typeof Import.unknownVersionAlias
   {
+    if (name === 'stdlib') return stlib;
+    
     if (registry === null) {
       registry = this.getDefaultRegistryUrl();
       

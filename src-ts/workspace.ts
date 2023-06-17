@@ -437,7 +437,7 @@ export class Workspace {
     const errors = await this.loadPath(new ModulePath(pkg.id, [], 'main.hyloa'));
     
     if (errors.length === 0) {
-      target.compile(outFolder, this, pkg);
+      await target.compile(outFolder, this, pkg);
     }
     
     return errors;

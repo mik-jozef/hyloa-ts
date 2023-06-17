@@ -68,6 +68,12 @@ export class Path {
     public file: string | null,
   ) {}
   
+  parent(): Path {
+    return this.file === null
+      ? new Path(this.folders.slice(0, -1), null)
+      : new Path([...this.folders], null);
+  }
+  
   toString() {
     return '/' + this.folders.map(f => f + '/').join('') + (this.file || '');
   }
@@ -121,8 +127,11 @@ export class Folder {
     }
   }
   
-  writeFile(filePath: Path, str: string) {
+  async writeFile(filePath: Path, str: string) {
     const path = this.path + filePath.toString();
+    const parentPath = this.path + filePath.parent().toString();
+    
+    await promises.mkdir(parentPath, { recursive: true });
     
     return promises.writeFile(path, str);
   }

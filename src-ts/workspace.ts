@@ -69,7 +69,7 @@ type LoadingResultFn = (loadingResult: ModuleLoadError | null) => void;
 export class Workspace {
   // Map from project names to projects.
   private projectMap = new Map<string, Project>();
-
+  
   /*/
     Package id to package. Published versions of local packages
     are here too if they are depended on by other packages.
@@ -78,7 +78,7 @@ export class Workspace {
     project in `projectMap`.
   /*/
   private installedPackageMap = new Map<string, PublishedPackage>();
-
+  
   /*/
     Linked packages are local packages that are configured
     to overshadow an installed package. Used for development
@@ -89,9 +89,9 @@ export class Workspace {
     The map takes a full package reference to a local package ID.
   /*/
   private linkedPackageMap = new Map<string, string>();
-
+  
   private moduleProvider: ModuleProvider;
-
+  
   /*/
     Uses stringified `ModulePath`s to avoid duplicates.
     Format: see `ModulePath.toString`. The promise gets resolved
@@ -102,7 +102,7 @@ export class Workspace {
     of paths that failed to load.
   /*/
   private discoveredPathMap = new Map<string, Promise<ModuleLoadError | null>>();
-
+  
   constructor(
     moduleProvider: ModuleProvider | Folder,
   ) {
@@ -121,19 +121,19 @@ export class Workspace {
   {
     const pathString = path.toString();
     const promise = this.discoveredPathMap.get(pathString);
-
+    
     if (promise) return promise;
-
+    
     let markImportAsLoaded!: LoadingResultFn;
-
+    
     this.discoveredPathMap.set(
       pathString,
       new Promise(res => markImportAsLoaded = res),
     );
-
+    
     return markImportAsLoaded;
   }
-
+  
   /*/
     Loading a project does not load its packages.
     
@@ -141,61 +141,63 @@ export class Workspace {
   /*/
   async loadProject(projectName: string): Promise<ProjectJsonError | null> {
     if (this.projectMap.has(projectName)) return null;
-
+    
     const projectJsonString = await this.moduleProvider.getProjectJson(projectName);
-
+    
     if (projectJsonString instanceof ProjectJsonError) {
       return projectJsonString;
     }
-
+    
     const projectJsonOrError = ProjectJson.fromJson(projectJsonString);
-
+    
     if (projectJsonOrError instanceof JsonValidationError) {
       return new ProjectJsonValidationError(projectName, projectJsonOrError);
     }
-
+    
     const project = new Project(projectName, projectJsonOrError);
-
+    
     this.projectMap.set(projectName, project);
-
+    
     return null;
   }
-
+  
   private async getPackageJsonString(packageId: PackageId):
-    Promise<string | ModuleLoadError> {
+    Promise<string | ModuleLoadError>
+  {
     const phJsonString = await this.moduleProvider.getModuleSource(
       new ModulePath(packageId, [], 'package.hyloa.json'),
     );
-
+    
     if (typeof phJsonString === 'string') {
       return phJsonString;
     }
-
+    
     if (phJsonString instanceof OtherModuleProviderError) {
       return phJsonString;
     }
-
+    
     if (!(phJsonString instanceof ModuleNotFound)) {
       exit('Programmer error - phJsonString has unknown type', phJsonString);
     }
-
+    
     return this.moduleProvider.getModuleSource(
       new ModulePath(packageId, [], 'package.json'),
     );
   }
 
   private async loadPackageJson(projectJson: ProjectJson | null, packageId: PackageId):
-    Promise<PackageJson | ModuleLoadError | PackageJsonValidationError> {
+    Promise<PackageJson | ModuleLoadError | PackageJsonValidationError>
+  {
     const packageJsonString = await this.getPackageJsonString(packageId);
-
+    
     if (packageJsonString instanceof ModuleLoadError) return packageJsonString;
-
+    
     const packageJsonOrError = PackageJson.fromJson(projectJson, packageJsonString);
-
+    
     if (packageJsonOrError instanceof JsonValidationError) {
       return new PackageJsonValidationError(packageId, packageJsonOrError);
     }
-
+    
     return packageJsonOrError;
   }
 
@@ -204,68 +206,69 @@ export class Workspace {
     Subsequent calls with the same package ID are a no-op.
   /*/
   async loadPackage(packageId: PackageId):
-    Promise<PackageAny | ModuleLoadError | PackageJsonValidationError> {
+    Promise<PackageAny | ModuleLoadError | PackageJsonValidationError>
+  {
     if (packageId instanceof LocalPackageId) {
       const project = this.projectMap.get(packageId.projectName);
-
+      
       if (!project) exit('Programmer error -- called loadPackage on a non-loaded project.');
-
+      
       const existingPackage = project.packages.get(packageId.packageName);
-
+      
       if (existingPackage) return existingPackage;
-
+      
       const packageJsonOrError =
         await this.loadPackageJson(project.projectJson, packageId);
-
+      
       if (packageJsonOrError instanceof ProgramError) return packageJsonOrError;
-
+      
       const pkg = new Package(packageId, packageJsonOrError)
-
+      
       project.packages.set(packageId.packageName, pkg);
-
+      
       return pkg;
     }
-
+    
     if (packageId instanceof PublishedPackageId) {
       const packageJsonOrError = await this.loadPackageJson(null, packageId);
-
+      
       if (packageJsonOrError instanceof ProgramError) return packageJsonOrError;
-
+      
       const pkg = new Package(packageId, packageJsonOrError);
-
+      
       this.installedPackageMap.set(packageId.toString(), pkg);
-
+      
       return pkg;
     }
-
+    
     exit('Programmer error -- unknown package id type.', packageId);
   }
-
+  
   // Assumes the package is loaded.
   private async getModule(path: ModulePathPackage, packageJson: PackageJson):
     Promise<Module | ModuleLoadTimeError[]>
   {
     const moduleSource = await this.moduleProvider.getModuleSource(path);
-
+    
     if (moduleSource instanceof ModuleLoadError) {
       return [moduleSource];
     }
-
+    
     const parser: ParserInMap | undefined =
       // "Type 'null' cannot be used as an index type.ts(2538)"
       // !!ts-expect-error It fucking can.
       parserMap[path.extension() as keyof typeof parserMap];
-
+    
     if (!parser) exit('Programmer error -- tried to load a file with an unsupported extension.', path);
-
+    
     const moduleAst = parser.parse(moduleSource);
-
+    
     if (!(moduleAst instanceof ModuleAst)) {
       // TODO handle this better in hyloa. Probs move `ParseError` to the parser.
       // Also recover from recoverable parsing errors.
       return [new ParseError(path, 'unknown' as any, moduleAst)];
     }
-
+    
     return new Module(moduleAst, path, packageJson);
   }
 
@@ -273,66 +276,67 @@ export class Workspace {
   private addModule(path: ModulePathPackage, module: Module): void {
     if (path.packageId instanceof LocalPackageId) {
       const project = this.projectMap.get(path.packageId.projectName);
-
+      
       if (!project) exit('Programmer error -- called loadPath with a non-loaded project.', path, module);
-
+      
       const pkg = project.packages.get(path.packageId.packageName);
-
+      
       if (!pkg) exit('Programmer error -- called loadPath with a non-loaded package.', path, module);
-
+      
       pkg.addModule(module);
     } else {
       const pkg = this.installedPackageMap.get(path.packageId.toString())
-
+      
       if (!pkg) exit('Programmer error -- called loadPath with a non-loaded package.', path, module);
-
+      
       pkg.addModule(module);
     }
   }
-
+  
   async loadPath(path: ModulePathPackage, loadedFrom: ModulePathPackage, loadedAt: SrcRange): Promise<ModuleLoadTimeError[]>
   async loadPath(path: ModulePathPackage, loadedFrom: null, loadedAt: null): Promise<ModuleLoadTimeError[]>
   async loadPath(path: ModulePathPackage): Promise<ModuleLoadTimeError[]>
-
+  
   // If called multiple times, the subsequent calls will return an empty array.
   async loadPath(
     path: ModulePathPackage,
     loadedFrom: ModulePathPackage | null = null,
     loadedAt: SrcRange | null = null,
   ):
-    Promise<ModuleLoadTimeError[]> {
+    Promise<ModuleLoadTimeError[]>
+  {
     const guard = this.loadPathGuard(path);
-
+    
     if (guard instanceof Promise) {
       const maybeError = await guard;
-
+      
       if (maybeError && loadedFrom) {
         maybeError.importReferences.push([loadedFrom, loadedAt!]);
       }
-
+      
       return [];
     }
-
+    
     if (!isExtensionSupported(path.extension())) {
       const err = new UnsupportedFileType(path);
-
+      
       guard(err);
-
+      
       return [err];
     }
-
+    
     const loadPackageError = await this.loadPackage(path.packageId)
-
+    
     if (loadPackageError instanceof ProgramError) {
       loadPackageError instanceof ModuleLoadError
         ? guard(loadPackageError)
         : guard(null);
-
+      
       return [loadPackageError];
     }
-
+    
     const moduleOrErrors = await this.getModule(path, loadPackageError.packageJson);
-
+    
     if (Array.isArray(moduleOrErrors)) {
       const moduleLoadError: ModuleLoadError | null = moduleOrErrors
         // This is to placate TypeScript.
@@ -344,23 +348,23 @@ export class Workspace {
 
       return moduleOrErrors;
     }
-
+    
     this.addModule(path, moduleOrErrors);
-
+    
     const errorsInImports = await this.loadImports(moduleOrErrors);
-
+    
     guard(null);
-
+    
     return errorsInImports;
   }
-
+  
   private async loadImports(module: Module) {
     const allErrors: ModuleLoadTimeError[][] = await Promise.all(
       module.imports.map(
         async (imported) => {
           const { importKeyword } = imported.ast;
           const { importedPath } = imported;
-
+          
           switch (importedPath) {
             case Import.missingDefaultRegistry:
               return [
@@ -391,10 +395,10 @@ export class Workspace {
         },
       ),
     );
-
+    
     return allErrors.flat();
   }
-
+  
   validatePackage(
     _projectName: string,
     _packageName: string,

@@ -4,7 +4,7 @@ import { exit } from "../../utils/exit.js";
 import { Folder, Path } from "../../utils/fs.js";
 import { Workspace } from "../../workspace.js";
 import { NodeJS, Web } from "../targets.js";
-import { TopLevelCodeEmitter } from "./code-emitter.js";
+import { TopLevelCodeEmitter } from "../code-emitter.js";
 import { ModuleEmitter } from "./module-compiler.js";
 
 

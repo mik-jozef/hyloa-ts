@@ -88,7 +88,7 @@ export class Workspace {
     
     The map takes a full package reference to a local package ID.
   /*/
-  private linkedPackageMap = new Map<string, string>();
+  private linkedPackageMap = new Map<string, LocalPackageId>();
   
   private moduleProvider: ModuleProvider;
   
@@ -397,6 +397,48 @@ export class Workspace {
     );
     
     return allErrors.flat();
+  }
+  
+  // Returns a reference to a loaded project.
+  getProject(projectName: string) {
+    const project = this.projectMap.get(projectName) ?? null;
+    
+    if (!project) exit(`Project "${projectName}" is not loaded.`);
+    
+    return project;
+  }
+  
+  // Returns a reference to a loaded package.
+  getPackage(packageId: PackageId, followLinks = true): PackageAny {
+    if (packageId instanceof LocalPackageId) {
+      const project = this.getProject(packageId.projectName);
+      
+      const pkg = project.packages.get(packageId.packageName);
+    
+      if (!pkg) {
+        exit(
+          `Package "${
+            packageId.packageName
+          }" is not loaded in the project "${
+            packageId.projectName
+          }".`,
+        );
+      }
+      
+      return pkg;
+    } else {
+      const id = packageId.toString();
+      
+      const linkedId = (followLinks && this.linkedPackageMap.get(id)) ?? null;
+      
+      if (linkedId) return this.getPackage(linkedId);
+      
+      const pkg = this.installedPackageMap.get(id) ?? null;
+      
+      if (!pkg) exit(`Package ${id} is not loaded.`);
+      
+      return pkg;
+    }
   }
   
   validatePackage(

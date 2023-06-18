@@ -1,10 +1,9 @@
 import { Module } from "../../languages/module";
-import { CodeEmitter } from "./code-emitter";
 
+// In hyloa, support UFCS, and just have the emit[X] functions.
 export class ModuleEmitter {
   constructor(
-    private module: Module,
-    private emitter: CodeEmitter
+    public module: Module,
   ) {}
   
   emitSkeletons(): void {}

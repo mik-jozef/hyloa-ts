@@ -5,7 +5,7 @@ import { inspect } from 'util';
 export function exit(message: string, ...rest: unknown[]): never {
   console.log(
     message,
-    rest.map(arg => inspect(arg, { depth: null, colors: true })),
+    ...rest.map(arg => inspect(arg, { depth: null, colors: true })),
   );
   
   nodeExit();

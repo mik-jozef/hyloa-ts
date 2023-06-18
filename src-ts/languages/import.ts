@@ -31,12 +31,7 @@ export abstract class ImportAst extends SyntaxTreeNode {
   abstract path: string;
   abstract parsedPath: ParsedPath | null;
   
-  /*/
-    This serves as a temporary anchor for potential errors.
-    
-    TODO replace with specific error positions for specific
-    error types.
-  /*/
+  // This serves as an anchor for potential errors.
   abstract importKeyword: SrcRange;
   
   isExternalImport(): this is ExternalImportAst {

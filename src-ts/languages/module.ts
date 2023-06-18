@@ -75,10 +75,10 @@ export class ModulePath<Pid extends LibraryId> {
     }
   }
   
-  toString(): string {
-    return this.packageId.toString() + '/'
+  toString(includePackageId = true): string {
+    return (includePackageId ? this.packageId.toString() : '') + '/'
       + this.folderArr.map(folder => folder + '/').join()
-      + (this.file ? this.file : '') + '.hyloa';
+      + (this.file ? this.file : '');
   }
   
   // The returned path assumes the workspace is the root folder.

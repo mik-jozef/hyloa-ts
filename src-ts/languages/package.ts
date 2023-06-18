@@ -74,6 +74,8 @@ export /* final */ abstract class LibraryId {
 
 // TODO toFsPath should be a standalone function
 export abstract class PackageId extends LibraryId {
+  abstract toString(): string;
+  
   abstract toFsPath(folderArr: string[], file: string | null): Path;
 }
 
@@ -351,7 +353,7 @@ export class Package<Pid extends PackageId> {
   }
   
   addModule(module: Module) {
-    this.modules.set(module.path.toString(), module);
+    this.modules.set(module.path.toString(false), module);
   }
 }
 

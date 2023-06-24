@@ -8,6 +8,16 @@ import { TopLevelCodeEmitter } from "../code-emitter.js";
 import { ModuleEmitter } from "./module-emitter.js";
 
 
+const templateCommon =
+`const _go = (fn, ...args) => {
+  let stack = [], ret = null;
+  fn(stack, ...args);
+  while (stack[stack.length - 1].go) ret = stack[stack.length-1].go();
+  return ret;
+}
+
+`;
+
 const webFileTemplate = (script: string) =>
 `<!doctype html>
 
@@ -23,6 +33,7 @@ const webFileTemplate = (script: string) =>
 <div id="content-root">
 
 <script type="module">
+${templateCommon}
 ${script}
 </script>
 
@@ -30,7 +41,10 @@ ${script}
 </html>
 `;
 
-const nodeJsFileTemplate = (script: string) => script;
+const nodeJsFileTemplate = (script: string) =>
+`${templateCommon}
+${script}
+`;
 
 const createEmitters = (workspace: Workspace, moduleEmitters: Map<string, ModuleEmitter>) => {
   for (const moduleEmitter of moduleEmitters.values()) {

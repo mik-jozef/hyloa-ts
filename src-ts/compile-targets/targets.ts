@@ -1,7 +1,7 @@
 import { PackageAny } from "../languages/package";
 import { Folder, Path } from "../utils/fs.js";
 import { Workspace } from "../workspace";
-import { compileToJs } from "./js/compileToJs.js";
+import { compileToJs } from "./js/compile-to-js.js";
 
 
 export abstract class Target {

@@ -11,11 +11,11 @@ import { token } from './tokenizer.js';
 import "./expressions.js";
 
 
-type Declaration = LetDeclaration | LetDeclarationHead | ClassLiteral;
+export type ModuleDeclaration = LetDeclaration | LetDeclarationHead | ClassLiteral;
 
 export class ModuleMember extends SyntaxTreeNode {
   isPrivate!: Token<'private'> | null;
-  member!: Declaration;
+  member!: ModuleDeclaration;
   
   static rule = new Caten(
     new Maybe(

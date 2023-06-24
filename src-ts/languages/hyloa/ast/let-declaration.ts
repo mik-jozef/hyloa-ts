@@ -1,4 +1,4 @@
-import { SyntaxTreeNode, Caten, IdentifierToken, Maybe, Match, Or, Repeat } from 'lr-parser-typescript';
+import { SyntaxTreeNode, Caten, IdentifierToken, Maybe, Match, Or, Repeat, Token } from 'lr-parser-typescript';
 
 import { DestructuredMembers, Expr } from './expressions.js';
 import { token } from './tokenizer.js';
@@ -9,12 +9,12 @@ export const matchTypeExprRung = new Match(false, 'type', null!);
 export const matchBodyExprRung = new Match(true, 'body', null!);
 export const matchParamsDestructuredMembers = new Match(true, 'body', null!);
 
-class Param extends SyntaxTreeNode {
+export class Param extends SyntaxTreeNode {
   name!: IdentifierToken;
   type!: Expr;
   defaultArg!: Expr;
   
-  static rule = new Caten( // TODO destructuring: "let x({ a }) := a"
+  static rule = new Caten(
     new Match(false, 'name', token('identifier')),
     new Maybe(
       new Caten(
@@ -33,6 +33,7 @@ class Param extends SyntaxTreeNode {
 
 export class LetDeclarationHead extends SyntaxTreeNode {
   name!: IdentifierToken | null;
+  hasParams!: Token<'('> | null;
   params!: (Param | DestructuredMembers)[];
   type!: Expr;
   
@@ -42,9 +43,9 @@ export class LetDeclarationHead extends SyntaxTreeNode {
     
     new Or(
       new Caten(),
-      // TODO destructuring,
+      // TODO destructuring: `let { a } := ...;`.
       new Caten(
-        token('('),
+        new Match(false, 'hasParams', token('(')),
         new Repeat(
           new Or(
             new Match(true, 'params', Param),

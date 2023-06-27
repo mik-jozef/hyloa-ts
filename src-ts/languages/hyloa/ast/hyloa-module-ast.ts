@@ -22,9 +22,9 @@ export class ModuleMember extends SyntaxTreeNode {
       new Match(false, 'isPrivate', token('private')),
     ),
     new Or(
-      new Match(true, 'member', LetDeclaration),
-      new Match(true, 'member', LetDeclarationHead),
-      new Match(true, 'member', ClassLiteral),
+      new Match(false, 'member', LetDeclaration),
+      new Match(false, 'member', LetDeclarationHead),
+      new Match(false, 'member', ClassLiteral),
     ),
   );
 }

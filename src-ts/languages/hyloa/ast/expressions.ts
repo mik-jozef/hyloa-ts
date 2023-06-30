@@ -8,6 +8,7 @@ import {
   matchBodyExprRung,
   matchDefaultArgExprRung,
   matchParamsDestructuredMembers,
+  matchMembersDestructuredMembers as matchMembersDestructuredMembers1,
 } from "./let-declaration.js";
 import { token } from "./tokenizer.js";
 
@@ -476,6 +477,7 @@ const matchTypeDestructuredMembers = new Match(false, 'type', null!);
 export class DestructuredMember extends SyntaxTreeNode {
   modifier!: Token<'let'> | Token<'let'> | null;
   name!: IdentifierToken;
+  origName!: IdentifierToken | null;
   
   newModifier!: Token<'let'> | Token<'let'> | null;
   newName!: IdentifierToken | null;
@@ -483,23 +485,18 @@ export class DestructuredMember extends SyntaxTreeNode {
   type!: Expr | DestructuredMember | null;
   
   static rule: Caten = new Caten(
+    new Maybe(
+      new Caten(
+        new Match(false, 'origName', token('identifier')),
+        token('as'),
+      ),
+    ),
+    
     new Or(
-      new Caten(),
       new Match(false, 'modifier', token('let')),
       new Match(false, 'modifier', token('asn')),
     ),
     new Match(false, 'name', token('identifier')),
-    
-    new Maybe(
-      new Caten(
-        token('as'),
-        new Or(
-          new Match(false, 'newModifier', token('let')),
-          new Match(false, 'newModifier', token('asn')),
-        ),
-        new Match(false, 'newName', token('identifier')),
-      ),
-    ),
     
     new Or(
       new Caten(),
@@ -542,7 +539,7 @@ export class With extends SyntaxTreeNode {
 }
 
 export class Conditional extends SyntaxTreeNode {
-  conditional!: WithOrLower;
+  condition!: WithOrLower;
   ifPos!: Expr | null;
   ifNeg!: ConditionalOrLower | null;
   
@@ -656,6 +653,7 @@ matchValueExistentialQuantifier.match = ExistentialQuantifier;
 matchValueExprRung.match = ExprRung;
 
 matchMembersDestructuredMembers.match = DestructuredMembers;
+matchMembersDestructuredMembers1.match = DestructuredMembers;
 matchParamsDestructuredMembers.match = DestructuredMembers;
 matchTypeExprRung0.match = ExprRung;
 matchTypeExprRung1.match = ExprRung;

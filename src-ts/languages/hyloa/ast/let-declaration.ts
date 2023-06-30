@@ -7,16 +7,20 @@ import { token } from './tokenizer.js';
 export const matchDefaultArgExprRung = new Match(true, 'defaultArg', null!);
 export const matchTypeExprRung = new Match(false, 'type', null!);
 export const matchBodyExprRung = new Match(true, 'body', null!);
-export const matchParamsDestructuredMembers = new Match(true, 'body', null!);
+export const matchParamsDestructuredMembers = new Match(true, 'params', null!);
+export const matchMembersDestructuredMembers = new Match(true, 'members', null!);
 
 export class Param extends SyntaxTreeNode {
   name!: IdentifierToken;
   type!: Expr;
   defaultArg!: Expr;
+  members!: DestructuredMembers;
   
   static rule = new Caten(
     new Match(false, 'name', token('identifier')),
-    new Maybe(
+    new Or(
+      new Caten(),
+      matchMembersDestructuredMembers,
       new Caten(
         token(':'),
         matchTypeExprRung,

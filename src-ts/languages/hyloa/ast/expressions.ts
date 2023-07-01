@@ -7,8 +7,7 @@ import {
   matchTypeExprRung as matchTypeExprRung1,
   matchBodyExprRung,
   matchDefaultArgExprRung,
-  matchParamsDestructuredMembers,
-  matchMembersDestructuredMembers as matchMembersDestructuredMembers1,
+  matchTypeDestructuredMembers as matchTypeDestructuredMembers1,
 } from "./let-declaration.js";
 import { token } from "./tokenizer.js";
 
@@ -479,9 +478,6 @@ export class DestructuredMember extends SyntaxTreeNode {
   name!: IdentifierToken;
   origName!: IdentifierToken | null;
   
-  newModifier!: Token<'let'> | Token<'let'> | null;
-  newName!: IdentifierToken | null;
-  
   type!: Expr | DestructuredMember | null;
   
   static rule: Caten = new Caten(
@@ -519,6 +515,7 @@ export class DestructuredMembers extends SyntaxTreeNode {
       {
         delimiter: token(','),
         trailingDelimiter: true,
+        lowerBound: 1,
       },
     ),
     token('}'),
@@ -566,11 +563,14 @@ export class Conditional extends SyntaxTreeNode {
 
 // Alternatives: `<<` (`<<*`) or `<:` (`<:*`) or `:=`
 export class Assignment extends SyntaxTreeNode {
-  left!: UnionOrLower;
+  left!: UnionOrLower | DestructuredMembers;
   rite!: ComparisonOrLower;
   
   static rule: Caten = new Caten(
-    new Match(false, 'left', UnionRung),
+    new Or(
+      new Match(false, 'left', UnionRung),
+      new Match(false, 'left', DestructuredMembers),
+    ),
     // TODO add param "allowsAssignment" which you set to false, so you
     // can replace this with `:=`.
     token('<<'),
@@ -653,8 +653,7 @@ matchValueExistentialQuantifier.match = ExistentialQuantifier;
 matchValueExprRung.match = ExprRung;
 
 matchMembersDestructuredMembers.match = DestructuredMembers;
-matchMembersDestructuredMembers1.match = DestructuredMembers;
-matchParamsDestructuredMembers.match = DestructuredMembers;
+matchTypeDestructuredMembers1.match = DestructuredMembers;
 matchTypeExprRung0.match = ExprRung;
 matchTypeExprRung1.match = ExprRung;
 matchBodyExprRung.match = ExprRung;

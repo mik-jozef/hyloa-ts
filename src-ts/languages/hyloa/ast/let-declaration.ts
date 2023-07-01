@@ -4,11 +4,10 @@ import { DestructuredMembers, Expr } from './expressions.js';
 import { token } from './tokenizer.js';
 
 
-export const matchDefaultArgExprRung = new Match(true, 'defaultArg', null!);
+export const matchDefaultArgExprRung = new Match(false, 'defaultArg', null!);
 export const matchTypeExprRung = new Match(false, 'type', null!);
 export const matchBodyExprRung = new Match(true, 'body', null!);
-export const matchParamsDestructuredMembers = new Match(true, 'params', null!);
-export const matchMembersDestructuredMembers = new Match(true, 'members', null!);
+export const matchTypeDestructuredMembers = new Match(false, 'type', null!);
 
 export class Param extends SyntaxTreeNode {
   name!: IdentifierToken;
@@ -20,7 +19,7 @@ export class Param extends SyntaxTreeNode {
     new Match(false, 'name', token('identifier')),
     new Or(
       new Caten(),
-      matchMembersDestructuredMembers,
+      matchTypeDestructuredMembers,
       new Caten(
         token(':'),
         matchTypeExprRung,
@@ -38,23 +37,18 @@ export class Param extends SyntaxTreeNode {
 export class LetDeclarationHead extends SyntaxTreeNode {
   name!: IdentifierToken | null;
   hasParams!: Token<'('> | null;
-  params!: (Param | DestructuredMembers)[];
+  params!: Param[];
   type!: Expr;
   
   static rule = new Caten(
     token('let'),
     new Maybe(new Match(false, 'name', token('identifier'))),
     
-    new Or(
-      new Caten(),
-      // TODO destructuring: `let { a } := ...;`.
+    new Maybe(
       new Caten(
         new Match(false, 'hasParams', token('(')),
         new Repeat(
-          new Or(
-            new Match(true, 'params', Param),
-            matchParamsDestructuredMembers,
-          ),
+          new Match(true, 'params', Param),
           {
             delimiter: token(','),
             trailingDelimiter: true,

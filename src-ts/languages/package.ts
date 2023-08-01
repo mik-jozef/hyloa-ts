@@ -1,3 +1,5 @@
+import Case from 'case';
+
 import { NodeJS, Target, Web } from '../compile-targets/targets.js';
 import { Path } from '../utils/fs.js';
 import { JsonValidationError } from '../utils/json-validation-error.js';
@@ -70,6 +72,8 @@ export /* final */ abstract class LibraryId {
   abstract equals(id: LibraryId): boolean;
   
   isPackageId(): this is PackageId { return !(this instanceof StandardLibrary) }
+  
+  abstract toName(folderArr: string[], file: string | null, varName: string): string;
 }
 
 // TODO toFsPath should be a standalone function
@@ -87,6 +91,13 @@ export class StandardLibrary extends LibraryId {
   
   equals(id: LibraryId) {
     return id instanceof StandardLibrary;
+  }
+  
+  toName(folderArr: string[], file: string | null, varName: string): string {
+    const folders = folderArr.map(folder => `_${folder}`);
+    const fileStr = file === null ? '' : `_${Case.camel(file)}`;
+    
+    return `_${stlib}${folders}${fileStr}_${varName}`;
   }
 }
 
@@ -118,6 +129,15 @@ export class LocalPackageId extends PackageId {
     ];
     
     return new Path(fsFolderArr, file === null ? '.hyloa' : file);
+  }
+  
+  toName(folderArr: string[], file: string | null, varName: string): string {
+    const project = Case.camel(this.projectName);
+    const pkg = Case.camel(this.packageName);
+    const folders = folderArr.map(folder => `_${folder}`);
+    const fileStr = file === null ? '' : `_${Case.camel(file)}`;
+    
+    return `__${project}_${pkg}${folders}${fileStr}_${varName}`;
   }
   
   equals(id: PackageId) {
@@ -164,6 +184,17 @@ export class PublishedPackageId extends PackageId {
     ];
     
     return new Path(fsFolderArr, file === null ? '.hyloa' : file);
+  }
+  
+  toName(folderArr: string[], file: string | null, varName: string): string {
+    const registry = Case.camel(this.registry);
+    const scope = this.scope === null ? '' : Case.camel(this.scope);
+    const name = Case.camel(this.name)
+    const version = this.version.toString('_');
+    const folders = folderArr.map(folder => `_${folder}`);
+    const fileStr = file === null ? '' : `_${Case.camel(file)}`;
+    
+    return `_${registry}_${scope}_${name}_${version}${folders}${fileStr}_${varName}`;
   }
   
   equals(id: PackageId) {

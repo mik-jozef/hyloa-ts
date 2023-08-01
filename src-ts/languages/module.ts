@@ -86,6 +86,10 @@ export class ModulePath<Pid extends LibraryId> {
     return this.packageId.toFsPath(this.folderArr, this.file);
   }
   
+  toName(varName: string): string {
+    return this.packageId.toName(this.folderArr, this.file, varName);
+  }
+  
   // Returns true iff `this` and `p` represent the same module.
   equals(p: ModulePathLibrary): boolean {
     return this.packageId.equals(p.packageId)

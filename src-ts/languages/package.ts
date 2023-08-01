@@ -2,7 +2,7 @@ import { NodeJS, Target, Web } from '../compile-targets/targets.js';
 import { Path } from '../utils/fs.js';
 import { JsonValidationError } from '../utils/json-validation-error.js';
 import { Import } from './import.js';
-import { Module } from './module.js';
+import { ModuleAny } from './module.js';
 import { ProjectJson } from './project.js';
 
 
@@ -341,7 +341,7 @@ export class PackageJson {
 /*/
 export class Package<Pid extends PackageId> {
   // Uses strings instead of ModulePaths to avoid duplicates.
-  modules = new Map<string, Module>();
+  modules = new Map<string, ModuleAny>();
   
   constructor(
     public id: Pid,
@@ -352,7 +352,7 @@ export class Package<Pid extends PackageId> {
     return this.id instanceof PublishedPackageId;
   }
   
-  addModule(module: Module) {
+  addModule(module: ModuleAny) {
     this.modules.set(module.path.toString(false), module);
   }
 }

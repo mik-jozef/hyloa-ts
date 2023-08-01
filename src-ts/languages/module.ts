@@ -107,11 +107,13 @@ export abstract class ModuleAst extends makeSyntaxTreeNode {
   abstract imports: ImportAst[];
 }
 
-export class Module {
+export type ModuleAny = Module<ModuleAst>;
+
+export class Module<Ast extends ModuleAst> {
   imports: Import[];
   
   constructor(
-    public ast: ModuleAst,
+    public ast: Ast,
     public path: ModulePathLibrary,
     packageJson: PackageJson,
   ) {

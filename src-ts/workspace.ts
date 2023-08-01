@@ -32,7 +32,7 @@ import { LyoModuleAst } from './languages/lyo/ast/lyo-module-ast.js';
 import { lyoTokenizer } from './languages/lyo/ast/tokenizer.js';
 import { SiresModuleAst } from './languages/sires/ast/sires-module-ast.js';
 import { siresTokenizer } from './languages/sires/ast/tokenizer.js';
-import { Module, ModuleAst, ModulePath, ModulePathPackage } from './languages/module.js';
+import { Module, ModuleAny, ModuleAst, ModulePath, ModulePathPackage } from './languages/module.js';
 import { LocalPackageId, Package, PackageAny, PackageId, PackageJson, PublishedPackage, PublishedPackageId } from './languages/package.js';
 import { Project, ProjectJson } from './languages/project.js';
 import { FileSystemProvider, ModuleProvider } from './module-provider.js';
@@ -246,7 +246,7 @@ export class Workspace {
   
   // Assumes the package is loaded.
   private async getModule(path: ModulePathPackage, packageJson: PackageJson):
-    Promise<Module | ModuleLoadTimeError[]>
+    Promise<ModuleAny | ModuleLoadTimeError[]>
   {
     const moduleSource = await this.moduleProvider.getModuleSource(path);
     
@@ -273,7 +273,7 @@ export class Workspace {
   }
 
   // Assumes the package is already loaded.
-  private addModule(path: ModulePathPackage, module: Module): void {
+  private addModule(path: ModulePathPackage, module: ModuleAny): void {
     if (path.packageId instanceof LocalPackageId) {
       const project = this.projectMap.get(path.packageId.projectName);
       
@@ -358,7 +358,7 @@ export class Workspace {
     return errorsInImports;
   }
   
-  private async loadImports(module: Module) {
+  private async loadImports(module: ModuleAny) {
     const allErrors: ModuleLoadTimeError[][] = await Promise.all(
       module.imports.map(
         async (imported) => {

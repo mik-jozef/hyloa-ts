@@ -54,41 +54,39 @@ export class FileSystemProvider implements ModuleProvider {
 }
 
 /*/
-  Only serves `project.json`, `package.json` and the main path
-  of a single package.
+  Serves modules from program's memory.
 /*/
-export class SingleModuleProvider implements ModuleProvider {
+export class MemoryProvider implements ModuleProvider {
   static defaultPackageJson =
     '{ dependencies: {}, devDependencies: {}, publishTo: {} }';
   
   static defaultProjectJson =
     '{ registries: {}, defaultRegistry: null }';
   
+  private packageJsonPath = new ModulePath(this.packageId, [], 'package.json');
+  
+  // Map from module paths to modules.
+  modules: Map<string, string>;
+  
   constructor(
     public packageId: LocalPackageId,
-    public moduleContent: string,
-    public projectJson: string = SingleModuleProvider.defaultProjectJson,
-    public packageJson: string = SingleModuleProvider.defaultPackageJson,
-  ) {}
+    // If string, represents the main module.
+    modules: string | Map<string, string>,
+    public projectJson: string = MemoryProvider.defaultProjectJson,
+  ) {
+    this.modules = modules instanceof Map ? modules : new Map([
+      [ mainPath(this.packageId).toString(), modules ],
+      [ this.packageJsonPath.toString(), MemoryProvider.defaultPackageJson ],
+    ]);
+  }
   
   getModuleSource(path: ModulePathPackage): string | ModuleNotFound {
-    /*/
-      `package.hyloa.json` is only supported by file system
-      providers, to avoid a potential conflict with npm's
-      `package.json`.
-    /*/
-    if (path.equals(new ModulePath(this.packageId, [], 'package.json'))) {
-      return this.packageJson;
-    }
-    
-    return path.equals(mainPath(this.packageId))
-      ? this.moduleContent
-      : new ModuleNotFound(path);
+    return this.modules.get(path.toString()) ?? new ModuleNotFound(path);
   }
   
   getProjectJson(projectName: string): string | MissingProjectJson | ProjectJsonModuleProviderError {
     if (projectName === this.packageId.projectName) {
-      return this.packageJson
+      return this.projectJson;
     }
     
     return new MissingProjectJson(projectName);

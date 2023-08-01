@@ -3,7 +3,7 @@ import { createInterface } from "readline";
 
 import { Workspace } from "./workspace.js";
 import { exit } from "./utils/exit.js";
-import { SingleModuleProvider } from "./module-provider.js";
+import { MemoryProvider } from "./module-provider.js";
 import { ExecutionContext } from "./runtime/execution-context.js";
 import { LocalPackageId } from "./languages/package.js";
 
@@ -13,7 +13,7 @@ type ReplOptions = {
 };
 
 export class Repl {
-  server = new Workspace(new SingleModuleProvider(new LocalPackageId('repl', 'repl'), ''));
+  server = new Workspace(new MemoryProvider(new LocalPackageId('repl', 'repl'), ''));
   
   constructor(
     private inStream: ReadStream,

@@ -31,8 +31,8 @@ export class Version {
     }
   }
   
-  toString() {
-    return [ this.major, this.minor, this.patch ].join('.')
+  toString(joinWith = '.') {
+    return [ this.major, this.minor, this.patch ].join(joinWith)
   }
   
   equals(v: Version) {

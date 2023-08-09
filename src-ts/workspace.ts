@@ -149,7 +149,7 @@ export class Workspace {
     }
     
     const projectJsonOrError = ProjectJson.fromJson(projectJsonString);
-    
+
     if (projectJsonOrError instanceof JsonValidationError) {
       return new ProjectJsonValidationError(projectName, projectJsonOrError);
     }

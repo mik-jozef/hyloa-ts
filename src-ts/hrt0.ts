@@ -54,13 +54,13 @@ async function compileCommandFn() {
   const [ outFolderPathArg, projectName, packageName, targetName ] =
     args as [ string, string, string, string ];
   
-  const outFolderPath = outFolderPathArg.match(/^@folder\[(?<path>[\w/.-]*)\]$/)?.groups?.path;
+  const outFolderPath = outFolderPathArg.match(/^@folder\[(?<path>[\w/.-]*)]$/)?.groups?.path;
   
   if (outFolderPath === undefined) {
     exit(`Path must be a folder (eg. \`@folder(out)\`), instead got: ${outFolderPathArg}`);
   }
   
-  const targetRef = targetName.match(/^@target\[(?<target>[\w/.-]*)\]$/)?.groups?.target;
+  const targetRef = targetName.match(/^@target\[(?<target>[\w/.-]*)]$/)?.groups?.target;
   
   let target: string | Target = targetName;
   
@@ -168,7 +168,7 @@ async function initProject(): Promise<void> {
     },
   ]);
   
-  await promises.mkdir(cwd + '/projects/' + projectName, { recursive: true }),
+  await promises.mkdir(cwd + '/projects/' + projectName, { recursive: true });
   
   await promises.writeFile(`${cwd}/projects/${projectName}/project.json`,
     JSON.stringify({

@@ -1,7 +1,7 @@
 import { ModulePathLibrary } from "../../languages/module.js";
 import { PackageAny, PackageId } from "../../languages/package.js";
 import { exit } from "../../utils/exit.js";
-import { Folder, Path } from "../../utils/fs.js";
+import { FolderHandle, Path } from "../../utils/fs.js";
 import { Workspace } from "../../workspace.js";
 import { NodeJS, Web } from "../targets.js";
 import { TopLevelCodeEmitter } from "../code-emitter.js";
@@ -65,7 +65,7 @@ const createEmitters = (workspace: Workspace, moduleEmitters: Map<string, Module
 }
 
 export async function compileToJs(
-  outFolder: Folder,
+  outFolder: FolderHandle,
   outFilePath: Path,
   workspace: Workspace,
   pkg: PackageAny,

@@ -80,10 +80,10 @@ export class Path {
 }
 
 // In TypeScript, you can access any file with just a string (its path).
-// Hyloa is capability-based, it's gonna use Folder and File
-// classes, and a program will need to be given one to be able
-// to open it.
-export class Folder {
+// Hyloa is capability-based, it's gonna use FolderHandle and FileHandle
+// classes, and a program will need to be given one to be able to access
+// it.
+export class FolderHandle {
   constructor(
     // The path should be without a trailing slash. Not part of Hyloa.
     private path: string,

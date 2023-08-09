@@ -1,5 +1,5 @@
 import { PackageAny } from "../languages/package";
-import { Folder, Path } from "../utils/fs.js";
+import { FolderHandle, Path } from "../utils/fs.js";
 import { Workspace } from "../workspace";
 import { compileToJs } from "./js/compile-to-js.js";
 
@@ -8,7 +8,7 @@ export abstract class Target {
   static targetType: string;
   
   abstract compile(
-    outFolder: Folder,
+    outFolder: FolderHandle,
     workspace: Workspace,
     pkg: PackageAny,
   ): Promise<void>;
@@ -22,7 +22,7 @@ export class Web extends Target {
   ) { super(); }
   
   async compile(
-    outFolder: Folder,
+    outFolder: FolderHandle,
     workspace: Workspace,
     pkg: PackageAny,
   ): Promise<void> {
@@ -47,7 +47,7 @@ export class NodeJS extends Target {
   }
   
   compile(
-    outFolder: Folder,
+    outFolder: FolderHandle,
     workspace: Workspace,
     pkg: PackageAny,
   ): Promise<void> {

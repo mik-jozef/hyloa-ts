@@ -1,7 +1,7 @@
 import { ModuleNotFound, ModuleLoadError, OtherModuleProviderError, MissingProjectJson, ProjectJsonModuleProviderError } from './languages/errors.js';
 import { mainPath, ModulePathPackage, ModulePath } from './languages/module.js';
 import { LocalPackageId } from './languages/package.js';
-import { FileNotFoundError, Folder, Path } from './utils/fs.js';
+import { FileNotFoundError, FolderHandle, Path } from './utils/fs.js';
 
 
 type MaybePromise<T> = T | Promise<T>;
@@ -23,7 +23,7 @@ export abstract class ModuleProvider {
 
 export class FileSystemProvider implements ModuleProvider {
   constructor(
-    public rootFolder: Folder,
+    public rootFolder: FolderHandle,
   ) {}
   
   async getModuleSource(modulePath: ModulePathPackage): Promise<string | ModuleLoadError> {

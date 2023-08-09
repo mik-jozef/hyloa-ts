@@ -37,7 +37,7 @@ import { LocalPackageId, Package, PackageAny, PackageId, PackageJson, PublishedP
 import { Project, ProjectJson } from './languages/project.js';
 import { FileSystemProvider, ModuleProvider } from './module-provider.js';
 import { exit } from './utils/exit.js';
-import { Folder } from "./utils/fs.js";
+import { FolderHandle } from "./utils/fs.js";
 import { JsonValidationError } from './utils/json-validation-error.js';
 import { Target } from './compile-targets/targets.js';
 
@@ -104,9 +104,9 @@ export class Workspace {
   private discoveredPathMap = new Map<string, Promise<ModuleLoadError | null>>();
   
   constructor(
-    moduleProvider: ModuleProvider | Folder,
+    moduleProvider: ModuleProvider | FolderHandle,
   ) {
-    this.moduleProvider = moduleProvider instanceof Folder
+    this.moduleProvider = moduleProvider instanceof FolderHandle
       ? new FileSystemProvider(moduleProvider)
       : moduleProvider;
   }
@@ -451,7 +451,7 @@ export class Workspace {
   // A "helper" function so that the consumers of Workspace
   // do not have to make several calls for simple use cases.
   async compileProgram(
-    outFolder: Folder,
+    outFolder: FolderHandle,
     projectName: string,
     packageName: string,
     target: string | Target,

@@ -13,7 +13,7 @@ import { Workspace } from './workspace.js'
 import { exit } from './utils/exit.js'
 import { ExecutionContext } from './runtime/execution-context.js'
 import { Repl } from './repl.js'
-import { Folder } from './utils/fs.js'
+import { FolderHandle } from './utils/fs.js'
 import { isKebabName } from './utils/is-kebab-name.js';
 import { Target, targets } from './compile-targets/targets.js';
 
@@ -41,7 +41,7 @@ if (!allowedCommandNames.some(name => commandName?.endsWith(name))) {
 
 function createWorkspace() {
   return new Workspace(
-    new Folder(
+    new FolderHandle(
       process.cwd(),
       'I solemnly swear I only call this in `hrt0.ts`',
     ),
@@ -73,7 +73,7 @@ async function compileCommandFn() {
   }
   
   const errors = await createWorkspace().compileProgram(
-    new Folder(
+    new FolderHandle(
       outFolderPath,
       'I solemnly swear I only call this in `hrt0.ts`',
     ),

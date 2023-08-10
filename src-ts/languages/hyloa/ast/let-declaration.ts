@@ -11,9 +11,9 @@ export const matchTypeDestructuredMembers = new Match(false, 'type', null!);
 
 export class Param extends SyntaxTreeNode {
   name!: IdentifierToken;
-  type!: Expr;
-  defaultArg!: Expr;
-  members!: DestructuredMembers;
+  type!: Expr | null;
+  defaultArg!: Expr | null;
+  members!: DestructuredMembers | null;
   
   static rule = new Caten(
     new Match(false, 'name', token('identifier')),
@@ -70,6 +70,8 @@ export class LetDeclarationHead extends SyntaxTreeNode {
 // TODO add param isClassMember which removes the let token
 // and adds colons at the end unless ending with '}'.
 export class LetDeclaration extends SyntaxTreeNode {
+  _TS: 'LetDeclaration' = 'LetDeclaration';
+  
   head!: LetDeclarationHead;
   body!: (Expr | LetDeclarationHead)[];
   

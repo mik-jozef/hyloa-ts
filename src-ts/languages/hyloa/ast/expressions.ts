@@ -28,6 +28,8 @@ const matchValueMul = new Match(false, 'value', null!);
 const matchValueDiv = new Match(false, 'value', null!);
 const matchValueAdd = new Match(false, 'value', null!);
 const matchValueSub = new Match(false, 'value', null!);
+const matchValueEquals = new Match(false, 'value', null!);
+const matchValueNotEquals = new Match(false, 'value', null!);
 const matchValueComparison = new Match(false, 'value', null!);
 const matchValueIntersection = new Match(false, 'value', null!);
 const matchValueUnion = new Match(false, 'value', null!);
@@ -41,14 +43,20 @@ const matchValueExistentialQuantifier = new Match(false, 'value', null!);
 const matchValueExprRung = new Match(false, 'value', null!);
 
 export class StringLiteral extends SyntaxTreeNode {
+  _TS: 'StringLiteral' = 'StringLiteral'
+  
   static rule = token('text');
 }
 
 export class NumberLiteral extends SyntaxTreeNode {
+  _TS: 'NumberLiteral' = 'NumberLiteral'
+  
   static rule = token('number');
 }
 
 export class TextLiteral extends SyntaxTreeNode {
+  _TS: 'TextLiteral' = 'TextLiteral'
+  
   static rule = new Or(); // TODO
 }
 
@@ -60,6 +68,10 @@ type BottomExprs =
   | TextLiteral // Markdown (or simillarly) formatted text.
   | NumberLiteral
   | IdentifierToken
+  | Token<'null'>
+  | Token<'undefined'>
+  | Token<'true'>
+  | Token<'false'>
   | ProcedureCall
   | TypeArguments
   | MemberAccess
@@ -76,6 +88,10 @@ export class BottomRung extends SyntaxTreeNode {
     new Match(false, 'value', TextLiteral),
     new Match(false, 'value', NumberLiteral),
     new Match(false, 'value', token('identifier')),
+    new Match(false, 'value', token('null')),
+    new Match(false, 'value', token('undefined')),
+    new Match(false, 'value', token('true')),
+    new Match(false, 'value', token('false')),
     matchValueProcedureCall,
     matchValueTypeArguments,
     matchValueMemberAccess,
@@ -144,6 +160,8 @@ export class AddSubOpsRung extends SyntaxTreeNode {
 
 export type ComparisonOrLower =
   | Comparison
+  | Equals
+  | NotEquals
   | AddSubOpsOrLower
 ;
 
@@ -151,6 +169,8 @@ export class ComparisonRung extends SyntaxTreeNode {
   static hidden = true;
   
   static rule = new Or(
+    matchValueEquals,
+    matchValueNotEquals,
     matchValueComparison,
     new Match(false, 'value', AddSubOpsRung),
   );
@@ -231,8 +251,9 @@ export type Expr =
   | Return
   | UniversalQuantifier
   | ExistentialQuantifier
-  | ConditionalOrLower
   | LetDeclaration
+  // TODO: | ProcedureType
+  | ConditionalOrLower
 ;
 
 export class ExprRung extends SyntaxTreeNode {
@@ -305,6 +326,8 @@ export class ProcedureCall extends SyntaxTreeNode {
 }
 
 export class TypeArguments extends SyntaxTreeNode {
+  _TS: 'TypeArguments' = 'TypeArguments'
+  
   static rule = new Caten(
     new Match(false, 'expr', BottomRung),
     token('['),
@@ -424,15 +447,39 @@ export class Sub extends SyntaxTreeNode {
   );
 }
 
+export class Equals extends SyntaxTreeNode {
+  exprs!: AddSubOpsOrLower[];
+  
+  static rule = new Repeat(
+    new Match(true, 'exprs', AddSubOpsRung),
+    {
+      delimiter: token('==='),
+      lowerBound: 2,
+    },
+  );
+}
+
+export class NotEquals extends SyntaxTreeNode {
+  left!: AddSubOpsOrLower;
+  rite!: AddSubOpsOrLower;
+  
+  static rule = new Caten(
+    new Match(false, 'left', AddSubOpsRung),
+    token('!=='),
+    new Match(false, 'rite', AddSubOpsRung),
+  );
+}
+
 export class Comparison extends SyntaxTreeNode {
-  exprs!: AddSubOpsOrLower;
-  operators!: MulDivOpsRung;
+  exprs!: AddSubOpsOrLower[];
+  operators!: (Token<'<'> | Token<'<='> | Token<'=='> | Token<'!='>)[];
   
   static rule = new Repeat(new Match(true, 'exprs', AddSubOpsRung), {
     delimiter: new Or(
       new Match(true, 'operators', token('<')),
       new Match(true, 'operators', token('<=')),
       new Match(true, 'operators', token('==')),
+      new Match(true, 'operators', token('!=')), // TODO make it a separate operator?
     ),
     lowerBound: 2,
   });
@@ -460,6 +507,7 @@ export class Union extends SyntaxTreeNode {
   );
 }
 
+// TODO split into MayBecome `>` and WillBecome `~>`?
 export class Becomes extends SyntaxTreeNode {
   left!: UnionOrLower;
   rite!: UnionOrLower;
@@ -474,7 +522,7 @@ export class Becomes extends SyntaxTreeNode {
 const matchTypeDestructuredMembers = new Match(false, 'type', null!);
 
 export class DestructuredMember extends SyntaxTreeNode {
-  modifier!: Token<'let'> | Token<'let'> | null;
+  modifier!: Token<'let'> | Token<'asn'> | null;
   name!: IdentifierToken;
   origName!: IdentifierToken | null;
   
@@ -488,7 +536,7 @@ export class DestructuredMember extends SyntaxTreeNode {
       ),
     ),
     
-    new Or(
+    new Or( // TODO disallow these in params.
       new Match(false, 'modifier', token('let')),
       new Match(false, 'modifier', token('asn')),
     ),
@@ -561,7 +609,8 @@ export class Conditional extends SyntaxTreeNode {
   );
 }
 
-// Alternatives: `<<` (`<<*`) or `<:` (`<:*`) or `:=`
+// Alternatives: `<<` (`<<*`) or `<:` (`<:*`) or `asn [left] :=`
+// TODO change grammar to?: asn [left]: newType := [rite]
 export class Assignment extends SyntaxTreeNode {
   left!: UnionOrLower | DestructuredMembers;
   rite!: ComparisonOrLower;
@@ -582,7 +631,7 @@ export class Return extends SyntaxTreeNode {
   expr!: Expr;
   
   static rule: Caten = new Caten(
-    token('return'),
+    token('return'), // TODO `return-foo expr`?
     new Match(false, 'expr', ExprRung),
   );
 }
@@ -640,6 +689,8 @@ matchValueMul.match = Mul;
 matchValueDiv.match = Div;
 matchValueAdd.match = Add;
 matchValueSub.match = Sub;
+matchValueEquals.match = Equals;
+matchValueNotEquals.match = NotEquals;
 matchValueComparison.match = Comparison;
 matchValueIntersection.match = Intersection;
 matchValueUnion.match = Union;

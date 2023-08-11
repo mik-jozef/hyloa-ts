@@ -38,7 +38,7 @@ const matchValueWith = new Match(false, 'value', null!);
 const matchValueConditional = new Match(false, 'value', null!);
 const matchValueAssignment = new Match(false, 'value', null!);
 const matchValueReturn = new Match(false, 'value', null!);
-const matchValueUniversalQuantifer = new Match(false, 'value', null!);
+const matchValueUniversalQuantifier = new Match(false, 'value', null!);
 const matchValueExistentialQuantifier = new Match(false, 'value', null!);
 const matchValueExprRung = new Match(false, 'value', null!);
 
@@ -261,7 +261,7 @@ export class ExprRung extends SyntaxTreeNode {
   
   static rule = new Or(
     matchValueReturn,
-    matchValueUniversalQuantifer,
+    matchValueUniversalQuantifier,
     matchValueExistentialQuantifier,
     new Match(false, 'value', LetDeclaration),
     new Match(false, 'value', ConditionalRung),
@@ -699,7 +699,7 @@ matchValueWith.match = With;
 matchValueConditional.match = Conditional;
 matchValueAssignment.match = Assignment;
 matchValueReturn.match = Return;
-matchValueUniversalQuantifer.match = UniversalQuantifier;
+matchValueUniversalQuantifier.match = UniversalQuantifier;
 matchValueExistentialQuantifier.match = ExistentialQuantifier;
 matchValueExprRung.match = ExprRung;
 

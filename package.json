@@ -15,6 +15,7 @@
     "hyloa": "./local/out/hrt0.js"
   },
   "devDependencies": {
+    "@types/jest": "^29.5.3",
     "@types/node": "^12.20.55",
     "@types/prompts": "^2.4.4",
     "jest": "^29.5.0",

@@ -24,15 +24,15 @@ describe('Compilation to JS', () => {
     const src =
 `// An example program
 
-let foo(a) := a;
-let foo(a, b) := b;
+let foo(a) := a
+let foo(a, b) := b
 
 let bar() {
-  let t = 42;
+  let t := 42;
   
   foo(t);
   
-  return foo(4 + foo(t));
+  return foo(4 + foo(t, 30));
 }
 `;
     

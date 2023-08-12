@@ -1,7 +1,7 @@
 import { PackageAny } from "../languages/package";
 import { FolderHandle, Path } from "../utils/fs.js";
 import { Workspace } from "../workspace";
-import { compileToJs } from "./js/compile-to-js.js";
+import { compileToJsAndSave } from "./js/compile-to-js.js";
 
 
 export abstract class Target {
@@ -26,7 +26,7 @@ export class Web extends Target {
     workspace: Workspace,
     pkg: PackageAny,
   ): Promise<void> {
-    return compileToJs(outFolder, this.outFilePath, workspace, pkg, this);
+    return compileToJsAndSave(outFolder, this.outFilePath, workspace, pkg, this);
   }
 }
 
@@ -51,7 +51,7 @@ export class NodeJS extends Target {
     workspace: Workspace,
     pkg: PackageAny,
   ): Promise<void> {
-    return compileToJs(outFolder, this.outFilePath, workspace, pkg, this);
+    return compileToJsAndSave(outFolder, this.outFilePath, workspace, pkg, this);
   }
 }
 

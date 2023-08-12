@@ -64,14 +64,12 @@ const createEmitters = (workspace: Workspace, moduleEmitters: Map<string, Module
   }
 }
 
-export async function compileToJs(
-  outFolder: FolderHandle,
-  outFilePath: Path,
+export function compileToJs(
   workspace: Workspace,
   pkg: PackageAny,
   target: Web | NodeJS,
 ):
-  Promise<void>
+  string
 {
   const emitter = new TopLevelCodeEmitter(target.constructor === Web ? '  ' : '');
   const moduleEmitters = new Map<string, ModuleEmitter>();
@@ -96,5 +94,17 @@ export async function compileToJs(
   
   const fileTemplate = target.constructor === Web ? webFileTemplate : nodeJsFileTemplate;
   
-  outFolder.writeFile(outFilePath, fileTemplate(emitter.getCode()));
+  return fileTemplate(emitter.getCode());
+}
+
+export const compileToJsAndSave = (
+  outFolder: FolderHandle,
+  outFilePath: Path,
+  workspace: Workspace,
+  pkg: PackageAny,
+  target: Web | NodeJS,
+) => {
+  const str = compileToJs(workspace, pkg, target);
+  
+  return outFolder.writeFile(outFilePath, str);
 }

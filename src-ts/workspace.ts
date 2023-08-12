@@ -66,6 +66,11 @@ type RunProgramOptions = typeof runProgramDefaultOptions;
 
 type LoadingResultFn = (loadingResult: ModuleLoadError | null) => void;
 
+type LoadAllRet =
+  | { readyToCompile: false, error: ProjectJsonError | ModuleLoadError | PackageJsonValidationError }
+  | { readyToCompile: true, errors: ModuleLoadTimeError[], target: Target, pkg: PackageAny }
+;
+
 export class Workspace {
   // Map from project names to projects.
   private projectMap = new Map<string, Project>();
@@ -450,42 +455,58 @@ export class Workspace {
   
   // A "helper" function so that the consumers of Workspace
   // do not have to make several calls for simple use cases.
-  async compileProgram(
-    outFolder: FolderHandle,
+  async loadAll(
     projectName: string,
     packageName: string,
-    target: string | Target,
-  ) {
+    // If a string, then such a target must exist in `package.json`.
+    targetOrTargetName: string | Target,
+  ): Promise<LoadAllRet> {
     const maybeError = await this.loadProject(projectName);
     
-    if (maybeError) return maybeError;
+    if (maybeError) return { readyToCompile: false, error: maybeError };
     
     const pkg =
       await this.loadPackage(new LocalPackageId(projectName, packageName));
     
-    if (!(pkg instanceof Package)) return pkg;
+    if (!(pkg instanceof Package)) return { readyToCompile: false, error: pkg };
     
-    if (!(target instanceof Target)) {
-      const tgt = pkg.packageJson.targets.get(target) ?? null;
-      
-      if (!tgt) {
-        // TODO
-        exit('Unimplemented: unknown target name.', projectName, packageName, target);
-      }
-      
-      target = tgt;
-    }
+    const target = targetOrTargetName instanceof Target
+      ? targetOrTargetName
+      : (() => {
+          const target = pkg.packageJson.targets.get(targetOrTargetName) ?? null;
+          
+          if (!target) {
+            // TODO
+            exit('Unimplemented: unknown target name.', projectName, packageName, targetOrTargetName);
+          }
+          
+          return target;
+        })()
     
     const errors = await this.loadPath(new ModulePath(pkg.id, [], 'main.hyloa'));
     
-    if (errors.length === 0) {
-      await target.compile(outFolder, this, pkg);
-    }
-    
-    return errors;
+    return { readyToCompile: true, errors, target, pkg };
   }
-
-  // TODO some api to interact with the code, eg. read variables,
+  
+  // A "helper" function so that the consumers of Workspace
+  // do not have to make several calls for simple use cases.
+  async compileProgram(
+    outFolder: FolderHandle,
+    projectName: string,
+    packageName: string,
+    // If a string, then such a target must exist in `package.json`.
+    targetOrTargetName: string | Target,
+  ) {
+    const ret = await this.loadAll(projectName, packageName, targetOrTargetName);
+    
+    if (!ret.readyToCompile) return ret.error;
+    
+    await ret.target.compile(outFolder, this, ret.pkg);
+    
+    return ret.errors;
+  }
+    
+    // TODO some api to interact with the code, eg. read variables,
   // call functions, debug them, modify the code, etc.
   // Also a parameterless emit overload that returns the exported
   // contents of the main module.

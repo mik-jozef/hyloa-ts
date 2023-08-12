@@ -58,10 +58,10 @@ export class FileSystemProvider implements ModuleProvider {
 /*/
 export class MemoryProvider implements ModuleProvider {
   static defaultPackageJson =
-    '{ dependencies: {}, devDependencies: {}, publishTo: {} }';
+    '{ "dependencies": {}, "devDependencies": {}, "publishTo": {} }';
   
   static defaultProjectJson =
-    '{ registries: {}, defaultRegistry: null }';
+    '{ "registries": {}, "defaultRegistry": null }';
   
   private packageJsonPath = new ModulePath(this.packageId, [], 'package.json');
   

@@ -9,6 +9,7 @@
     "debug-brk": "node --inspect-brk ./local/out/hrt0.js",
     "debug": "node --inspect ./local/out/hrt0.js",
     "run": "node ./local/out/hrt0.js",
+    "test": "NODE_OPTIONS=--experimental-vm-modules jest --testPathPattern=local/out",
     "watch": "rm -r ./local/out \n tsc --watch"
   },
   "bin": {

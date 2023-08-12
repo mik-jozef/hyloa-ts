@@ -103,7 +103,7 @@ export class ModulePath<Pid extends LibraryId> {
 }
 
 export function mainPath(packageId: PackageId) {
-  return new ModulePath(packageId, [], null);
+  return new ModulePath(packageId, [], 'main.hyloa');
 }
 
 

@@ -232,17 +232,17 @@ export class PublishedPackageId extends PackageId {
     RegistryUrl = string
     
     PackageSettings = {
-      defaultRegistry: KebabCase | null,
-      registries: Record<KebabCase, RegistryUrl>,
+      defaultRegistry: KebabCase | null = null,
+      registries: Record<KebabCase, RegistryUrl> = {},
       
       // In case this is a record, the publishing command should
       // require the name of the registry.
-      publishTo: KebabCase | Record<KebabCase, PublishTo>,
+      publishTo: KebabCase | Record<KebabCase, PublishTo> = {},
       
-      targets: Record<KebabCase, Target>,
+      targets: Record<KebabCase, Target> = {},
       
-      dependencies: Record<PublishedPackage.Id, Dependency>,
-      devDependencies: Record<PublishedPackage.Id, Dependency>,
+      dependencies: Record<PublishedPackage.Id, Dependency> = {},
+      devDependencies: Record<PublishedPackage.Id, Dependency> = {},
     }
   ```
 /*/
@@ -261,17 +261,17 @@ export class PackageJson {
     public projectJson: ProjectJson | null,
     packageJsonObj: any, // TODO a package.json-schema-satisfying object.
   ) {
-    this.defaultRegistry = packageJsonObj.defaultRegistry
-    this.registries = new Map(Object.entries(packageJsonObj.registries));
+    this.defaultRegistry = packageJsonObj.defaultRegistry ?? null;
+    this.registries = new Map(Object.entries(packageJsonObj.registries ?? {}));
     
     this.publishTo = new Map(
-      Object.entries<any>(packageJsonObj.publishTo).map(
+      Object.entries<any>(packageJsonObj.publishTo ?? {}).map(
         ([ key, { registry, scope, name, asPrivate } ]) => [ key, new PublishTo(registry, scope, name, asPrivate) ],
       ),
     );
     
     this.targets = new Map(
-      Object.entries<any>(packageJsonObj.targets).map(
+      Object.entries<any>(packageJsonObj.targets ?? {}).map(
         ([ key, val]) => {
           if (typeof val === 'string') {
             switch (val) {
@@ -290,8 +290,8 @@ export class PackageJson {
       ),
     );
     
-    this.dependencies = initDeps(packageJsonObj.dependencies);
-    this.devDependencies = initDeps(packageJsonObj.devDependencies);
+    this.dependencies = initDeps(packageJsonObj.dependencies ?? {});
+    this.devDependencies = initDeps(packageJsonObj.devDependencies ?? {});
     
     function initDeps(depsJson: any) {
       return new Map(

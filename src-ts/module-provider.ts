@@ -57,14 +57,6 @@ export class FileSystemProvider implements ModuleProvider {
   Serves modules from program's memory.
 /*/
 export class MemoryProvider implements ModuleProvider {
-  static defaultPackageJson =
-    '{ "dependencies": {}, "devDependencies": {}, "publishTo": {} }';
-  
-  static defaultProjectJson =
-    '{ "registries": {}, "defaultRegistry": null }';
-  
-  private packageJsonPath = new ModulePath(this.packageId, [], 'package.json');
-  
   // Map from module paths to modules.
   modules: Map<string, string>;
   
@@ -72,12 +64,24 @@ export class MemoryProvider implements ModuleProvider {
     public packageId: LocalPackageId,
     // If string, represents the main module.
     modules: string | Map<string, string>,
-    public projectJson: string = MemoryProvider.defaultProjectJson,
+    public projectJson: string = '{}',
   ) {
-    this.modules = modules instanceof Map ? modules : new Map([
-      [ mainPath(this.packageId).toString(), modules ],
-      [ this.packageJsonPath.toString(), MemoryProvider.defaultPackageJson ],
-    ]);
+    const packageJsonPath =
+      new ModulePath(this.packageId, [], 'package.json').toString();
+    
+    if (modules instanceof Map) {
+      if (modules.get(packageJsonPath) === undefined) {
+        console.log(modules);
+        throw new Error(`Package.json is missing in modules. (Expected at "${packageJsonPath}".)`);
+      }
+      
+      this.modules = modules;
+    } else {
+      this.modules = new Map([
+        [mainPath(this.packageId).toString(), modules],
+        [packageJsonPath, '{}'],
+      ]);
+    }
   }
   
   getModuleSource(path: ModulePathPackage): string | ModuleNotFound {

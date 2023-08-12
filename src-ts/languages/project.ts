@@ -9,23 +9,23 @@ import { LocalPackage } from "./package";
   
   ```
     ProjectSettings = {
-      registries: Record<KebabCase, Url>,
-      defaultRegistry: KebabCase | null,
+      registries: Record<KebabCase, Url> = {},
+      defaultRegistry: KebabCase | null = null,
     }
   ```
 /*/
 export class ProjectJson {
   constructor(
     public defaultRegistry: string | null = null,
-    public registries: Map<string, string>,
+    public registries: Map<string, string> = new Map(),
   ) {}
   
   static fromJson(json: string): ProjectJson | JsonValidationError<never> {
     const parsed = JSON.parse(json);
     
     return new ProjectJson(
-      parsed.defaultRegistry,
-      new Map(Object.entries(parsed.registries)),
+      parsed.defaultRegistry ?? null,
+      new Map(Object.entries(parsed.registries ?? {})),
     );
   }
 }

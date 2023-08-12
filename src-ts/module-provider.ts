@@ -78,14 +78,14 @@ export class MemoryProvider implements ModuleProvider {
       this.modules = modules;
     } else {
       this.modules = new Map([
-        [mainPath(this.packageId).toString(), modules],
+        [mainPath(this.packageId).toString(false), modules],
         [packageJsonPath, '{}'],
       ]);
     }
   }
   
   getModuleSource(path: ModulePathPackage): string | ModuleNotFound {
-    return this.modules.get(path.toString()) ?? new ModuleNotFound(path);
+    return this.modules.get(path.toString(false)) ?? new ModuleNotFound(path);
   }
   
   getProjectJson(projectName: string): string | MissingProjectJson | ProjectJsonModuleProviderError {

@@ -66,9 +66,11 @@ type RunProgramOptions = typeof runProgramDefaultOptions;
 
 type LoadingResultFn = (loadingResult: ModuleLoadError | null) => void;
 
-type LoadAllRet =
+type LoadedTarget<Tgt extends string | Target> = Tgt extends string ? Target : Tgt;
+
+type LoadAllRet<Tgt extends Target> =
   | { readyToCompile: false, error: ProjectJsonError | ModuleLoadError | PackageJsonValidationError }
-  | { readyToCompile: true, errors: ModuleLoadTimeError[], target: Target, pkg: PackageAny }
+  | { readyToCompile: true, errors: ModuleLoadTimeError[], target: Tgt, pkg: PackageAny }
 ;
 
 export class Workspace {
@@ -455,12 +457,12 @@ export class Workspace {
   
   // A "helper" function so that the consumers of Workspace
   // do not have to make several calls for simple use cases.
-  async loadAll(
+  async loadAll<Tgt extends string | Target>(
     projectName: string,
     packageName: string,
     // If a string, then such a target must exist in `package.json`.
-    targetOrTargetName: string | Target,
-  ): Promise<LoadAllRet> {
+    targetOrTargetName: Tgt,
+  ): Promise<LoadAllRet<LoadedTarget<Tgt>>> {
     const maybeError = await this.loadProject(projectName);
     
     if (maybeError) return { readyToCompile: false, error: maybeError };
@@ -485,7 +487,7 @@ export class Workspace {
     
     const errors = await this.loadPath(new ModulePath(pkg.id, [], 'main.hyloa'));
     
-    return { readyToCompile: true, errors, target, pkg };
+    return { readyToCompile: true, errors, target: target as LoadedTarget<Tgt>, pkg };
   }
   
   // A "helper" function so that the consumers of Workspace

@@ -357,7 +357,7 @@ export class PackageJson {
   Package name of a local package is determined by the folder
   it is in (kebab-case).
   
-  Package registries are specified in `project.json`.
+  Package registries are specified in `package.json`.
   
   Package reference is a string that can be used when importing
   the package. It is like package ID, except:

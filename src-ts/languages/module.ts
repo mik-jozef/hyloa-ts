@@ -102,10 +102,6 @@ export class ModulePath<Pid extends LibraryId> {
   }
 }
 
-export function mainPath(packageId: PackageId) {
-  return new ModulePath(packageId, [], 'main.hyloa');
-}
-
 
 export abstract class ModuleAst extends makeSyntaxTreeNode {
   abstract imports: ImportAst[];

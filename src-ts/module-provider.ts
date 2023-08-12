@@ -1,5 +1,5 @@
 import { ModuleNotFound, ModuleLoadError, OtherModuleProviderError, MissingProjectJson, ProjectJsonModuleProviderError } from './languages/errors.js';
-import { mainPath, ModulePathPackage, ModulePath } from './languages/module.js';
+import { ModulePathPackage } from './languages/module.js';
 import { LocalPackageId } from './languages/package.js';
 import { FileNotFoundError, FolderHandle, Path } from './utils/fs.js';
 
@@ -66,20 +66,16 @@ export class MemoryProvider implements ModuleProvider {
     modules: string | Map<string, string>,
     public projectJson: string = '{}',
   ) {
-    const packageJsonPath =
-      new ModulePath(this.packageId, [], 'package.json').toString();
-    
     if (modules instanceof Map) {
-      if (modules.get(packageJsonPath) === undefined) {
-        console.log(modules);
-        throw new Error(`Package.json is missing in modules. (Expected at "${packageJsonPath}".)`);
+      if (modules.get('/package.json') === undefined) {
+        throw new Error(`Package.json is missing in modules.`);
       }
       
       this.modules = modules;
     } else {
       this.modules = new Map([
-        [mainPath(this.packageId).toString(false), modules],
-        [packageJsonPath, '{}'],
+        [ '/main.hyloa', modules ],
+        [ '/package.json', '{}' ],
       ]);
     }
   }

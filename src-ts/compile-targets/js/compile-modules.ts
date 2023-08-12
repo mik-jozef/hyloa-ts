@@ -1,5 +1,6 @@
 import {
   ModuleLoadError,
+  ModuleLoadTimeError,
   PackageJsonValidationError,
   ProjectJsonError,
 } from "../../languages/errors";
@@ -13,7 +14,7 @@ import { compileToJs } from "./compile-to-js";
 export const compileModules = async (
   modules: string | Map<string, string>,
   target: Web | NodeJS,
-): Promise<string | ModuleLoadError | ProjectJsonError | PackageJsonValidationError> => {
+): Promise<string | ModuleLoadError | ProjectJsonError | PackageJsonValidationError | ModuleLoadTimeError[]> => {
   const projectName = 'local-project';
   const packageName = 'local-package';
   
@@ -27,6 +28,8 @@ export const compileModules = async (
   const ret = await workspace.loadAll(projectName, packageName, target);
   
   if (!ret.readyToCompile) return ret.error;
+  
+  if (1 <= ret.errors.length) return ret.errors;
   
   return compileToJs(workspace, ret.pkg, ret.target);
 }

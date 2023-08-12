@@ -31,7 +31,7 @@ export class Web extends Target {
 }
 
 
-type NodeRawAll = Pick<NodeJS, 'version'>;
+type NodeRawAll = Pick<NodeJS, 'version' | 'outFilePath'>;
 type NodeRaw = Partial<NodeRawAll>;
 
 export class NodeJS extends Target {

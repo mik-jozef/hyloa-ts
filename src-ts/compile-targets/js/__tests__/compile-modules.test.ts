@@ -2,11 +2,25 @@ import { compileModules } from "../compile-modules";
 import { NodeJS } from "../../targets";
 
 describe('Compilation to JS', () => {
-  it('compiles an empty', () => {
-    expect(compileModules('', new NodeJS()))
+  it('compiles an empty module', async () => {
+    const out = await compileModules('', new NodeJS())
+
+    expect(out).toStrictEqual(
+`const _go = (fn, ...args) => {
+  let stack = [], ret = null;
+  fn(stack, ...args);
+  while (stack[stack.length - 1].go) ret = stack[stack.length-1].go();
+  return ret;
+}
+
+
+
+
+
+`)
   });
   
-  it('compiles a simple module', () => {
+  it('compiles a simple module', async () => {
     const src =
 `// An example program
 
@@ -22,7 +36,7 @@ let bar() {
 }
 `;
     
-    expect(compileModules(src, new NodeJS())).toStrictEqual(
+    expect(await compileModules(src, new NodeJS())).toStrictEqual(
 `TODO`,
     );
   });

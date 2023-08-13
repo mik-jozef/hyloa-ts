@@ -12,7 +12,6 @@ import {
 import { token } from "./tokenizer.js";
 
 
-// TODO complement, "and" and "or" operators
 const matchValueClassLiteral = new Match(false, 'value', null!);
 const matchValueObjectLiteral = new Match(false, 'value', null!);
 //const matchValueArrayLiteral = new Match(false, 'value', null!);
@@ -23,6 +22,7 @@ const matchValueNegation = new Match(false, 'value', null!);
 const matchValueInverse = new Match(false, 'value', null!);
 const matchValueAwait = new Match(false, 'value', null!);
 const matchValueNowait = new Match(false, 'value', null!);
+const matchValueComplement = new Match(false, 'value', null!);
 const matchValueLeftUnaryPrefix = new Match(false, 'value', null!);
 const matchValueMul = new Match(false, 'value', null!);
 const matchValueDiv = new Match(false, 'value', null!);
@@ -30,6 +30,8 @@ const matchValueAdd = new Match(false, 'value', null!);
 const matchValueSub = new Match(false, 'value', null!);
 const matchValueEquals = new Match(false, 'value', null!);
 const matchValueNotEquals = new Match(false, 'value', null!);
+const matchValueAndExpr = new Match(false, 'value', null!);
+const matchValueOrExpr = new Match(false, 'value', null!);
 const matchValueComparison = new Match(false, 'value', null!);
 const matchValueIntersection = new Match(false, 'value', null!);
 const matchValueUnion = new Match(false, 'value', null!);
@@ -119,6 +121,7 @@ export class LeftUnaryOpsRung extends SyntaxTreeNode {
     matchValueInverse,
     matchValueAwait,
     matchValueNowait,
+    matchValueComplement,
     matchValueLeftUnaryPrefix,
     new Match( false, 'value', BottomRung ),
   );
@@ -176,9 +179,37 @@ export class ComparisonRung extends SyntaxTreeNode {
   );
 }
 
+export type AndExprOrLower =
+  | AndExpr
+  | ComparisonOrLower
+  ;
+
+export class AndExprRung extends SyntaxTreeNode {
+  static hidden = true;
+  
+  static rule = new Or(
+    matchValueAndExpr,
+    new Match(false, 'value', ComparisonRung),
+  );
+}
+
+export type OrExprOrLower =
+  | OrExpr
+  | AndExprOrLower
+  ;
+
+export class OrExprRung extends SyntaxTreeNode {
+  static hidden = true;
+  
+  static rule = new Or(
+    matchValueOrExpr,
+    new Match(false, 'value', AndExprRung),
+  );
+}
+
 export type IntersectionOrLower =
   | Intersection
-  | ComparisonOrLower
+  | OrExprOrLower
 ;
 
 export class IntersectionRung extends SyntaxTreeNode {
@@ -186,7 +217,7 @@ export class IntersectionRung extends SyntaxTreeNode {
   
   static rule = new Or(
     matchValueIntersection,
-    new Match(false, 'value', ComparisonRung),
+    new Match(false, 'value', OrExprRung),
   );
 }
 
@@ -328,6 +359,9 @@ export class ProcedureCall extends SyntaxTreeNode {
 export class TypeArguments extends SyntaxTreeNode {
   _TS: 'TypeArguments' = 'TypeArguments'
   
+  expr!: BottomExprs;
+  args!: Expr[];
+  
   static rule = new Caten(
     new Match(false, 'expr', BottomRung),
     token('['),
@@ -386,6 +420,15 @@ export class Nowait extends SyntaxTreeNode {
   
   static rule = new Caten(
     token('nowait'),
+    new Match(false, 'expr', LeftUnaryOpsRung),
+  );
+}
+
+export class Complement extends SyntaxTreeNode {
+  expr!: LeftUnaryOpsOrLower;
+  
+  static rule = new Caten(
+    token('~'),
     new Match(false, 'expr', LeftUnaryOpsRung),
   );
 }
@@ -483,6 +526,28 @@ export class Comparison extends SyntaxTreeNode {
     ),
     lowerBound: 2,
   });
+}
+
+export class AndExpr extends SyntaxTreeNode {
+  left!: ComparisonOrLower;
+  rite!: AndExprOrLower;
+  
+  static rule = new Caten(
+    new Match(false, 'left', ComparisonRung),
+    token('&&'),
+    new Match(false, 'rite', AndExprRung),
+  );
+}
+
+export class OrExpr extends SyntaxTreeNode {
+  left!: AndExprOrLower;
+  rite!: OrExprOrLower;
+  
+  static rule = new Caten(
+    new Match(false, 'left', AndExprRung),
+    token('||'),
+    new Match(false, 'rite', OrExprRung),
+  );
 }
 
 export class Intersection extends SyntaxTreeNode {
@@ -684,6 +749,7 @@ matchValueNegation.match = Negation;
 matchValueInverse.match = Inverse;
 matchValueAwait.match = Await;
 matchValueNowait.match = Nowait;
+matchValueComplement.match = Complement;
 matchValueLeftUnaryPrefix.match = LeftUnaryPrefix;
 matchValueMul.match = Mul;
 matchValueDiv.match = Div;
@@ -691,6 +757,8 @@ matchValueAdd.match = Add;
 matchValueSub.match = Sub;
 matchValueEquals.match = Equals;
 matchValueNotEquals.match = NotEquals;
+matchValueAndExpr.match = AndExpr;
+matchValueOrExpr.match = OrExpr;
 matchValueComparison.match = Comparison;
 matchValueIntersection.match = Intersection;
 matchValueUnion.match = Union;

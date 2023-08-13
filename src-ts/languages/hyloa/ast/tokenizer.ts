@@ -46,6 +46,8 @@ export const tokenStringArray = [
   ':=',
   '<<',
   '>>',
+  '&&',
+  '||',
   '$0',
   '$1',
   '$2',

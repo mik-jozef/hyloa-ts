@@ -8,8 +8,8 @@ const matchValueProcedureCall = new Match(false, 'value', null!);
 const matchValueTypeArguments = new Match(false, 'value', null!);
 const matchValueMemberAccess = new Match(false, 'value', null!);
 const matchValueAwait = new Match(false, 'value', null!);
-const matchValueEquals = new Match(false, 'value', null!);
 const matchValueComplement = new Match(false, 'value', null!);
+const matchValueEquals = new Match(false, 'value', null!);
 const matchValueIntersection = new Match(false, 'value', null!);
 const matchValueUnion = new Match(false, 'value', null!);
 const matchValueBecomes = new Match(false, 'value', null!);
@@ -48,6 +48,7 @@ export class BottomRung extends SyntaxTreeNode {
 
 type LeftUnaryOpsOrLower =
   | Await
+  | Complement
   | BottomExprs
 ;
 
@@ -56,6 +57,7 @@ export class LeftUnaryOpsRung extends SyntaxTreeNode {
   
   static rule = new Or(
     matchValueAwait,
+    matchValueComplement,
     new Match( false, 'value', BottomRung ),
   );
 }
@@ -74,23 +76,9 @@ export class EqualsRung extends SyntaxTreeNode {
   );
 }
 
-export type ComplementOrLower =
-  | Complement
-  | EqualsOrLower
-;
-
-export class ComplementRung extends SyntaxTreeNode {
-  static hidden = true;
-  
-  static rule = new Or(
-    matchValueComplement,
-    new Match(false, 'value', EqualsRung),
-  );
-}
-
 export type IntersectionOrLower =
   | Intersection
-  | ComplementOrLower
+  | EqualsOrLower
 ;
 
 export class IntersectionRung extends SyntaxTreeNode {
@@ -98,7 +86,7 @@ export class IntersectionRung extends SyntaxTreeNode {
   
   static rule = new Or(
     matchValueIntersection,
-    new Match(false, 'value', ComplementRung),
+    new Match(false, 'value', EqualsRung),
   );
 }
 
@@ -308,34 +296,34 @@ export class Await extends SyntaxTreeNode {
   );
 }
 
+export class Complement extends SyntaxTreeNode {
+  expr!: LeftUnaryOpsOrLower;
+  
+  static rule = new Caten(
+    token('~'),
+    new Match(false, 'expr', LeftUnaryOpsRung),
+  );
+}
+
 export class Equals extends SyntaxTreeNode {
   left!: LeftUnaryOpsOrLower;
   rite!: LeftUnaryOpsOrLower;
   
   static rule = new Caten(
     new Match(false, 'left', LeftUnaryOpsRung),
-    token('=='),
+    token('==='),
     new Match(false, 'rite', LeftUnaryOpsRung),
-  );
-}
-
-export class Complement extends SyntaxTreeNode {
-  expr!: ComplementOrLower;
-  
-  static rule = new Caten(
-    token('~'),
-    new Match(false, 'expr', ComplementRung),
   );
 }
 
 export class Intersection extends SyntaxTreeNode {
   left!: IntersectionOrLower;
-  rite!: LeftUnaryOpsOrLower;
+  rite!: EqualsRung;
   
   static rule = new Caten(
     new Match(false, 'left', IntersectionRung),
     token('&'),
-    new Match(false, 'rite', ComplementRung),
+    new Match(false, 'rite', EqualsRung),
   );
 }
 
@@ -438,8 +426,8 @@ matchValueProcedureCall.match = ProcedureCall;
 matchValueMemberAccess.match = MemberAccess;
 matchValueTypeArguments.match = TypeArguments;
 matchValueAwait.match = Await;
-matchValueEquals.match = Equals;
 matchValueComplement.match = Complement;
+matchValueEquals.match = Equals;
 matchValueIntersection.match = Intersection;
 matchValueUnion.match = Union;
 matchValueBecomes.match = Becomes;

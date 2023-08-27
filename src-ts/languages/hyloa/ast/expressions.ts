@@ -62,7 +62,7 @@ export class TextLiteral extends SyntaxTreeNode {
   static rule = new Or(); // TODO
 }
 
-type BottomExprs =
+type BottomExpr =
   | ClassLiteral
   | ObjectLiteral
   //| ArrayLiteral
@@ -110,7 +110,7 @@ type LeftUnaryOpsOrLower =
   | Inverse
   | Await
   | LeftUnaryPrefix
-  | BottomExprs
+  | BottomExpr
 ;
 
 export class LeftUnaryOpsRung extends SyntaxTreeNode {
@@ -342,7 +342,7 @@ export class ArrayLiteral extends SyntaxTreeNode {
 }*/
 
 export class ProcedureCall extends SyntaxTreeNode {
-  procedure!: BottomExprs;
+  procedure!: BottomExpr;
   args!: Expr[];
   
   static rule = new Caten(
@@ -359,7 +359,7 @@ export class ProcedureCall extends SyntaxTreeNode {
 export class TypeArguments extends SyntaxTreeNode {
   _TS: 'TypeArguments' = 'TypeArguments'
   
-  expr!: BottomExprs;
+  expr!: BottomExpr;
   args!: Expr[];
   
   static rule = new Caten(
@@ -374,7 +374,7 @@ export class TypeArguments extends SyntaxTreeNode {
 }
 
 export class MemberAccess extends SyntaxTreeNode {
-  expr!: BottomExprs;
+  expr!: BottomExpr;
   op!: Token<'.'> | Token<'?.'>
   memberName!: IdentifierToken;
   

@@ -342,7 +342,7 @@ export class ArrayLiteral extends SyntaxTreeNode {
 }*/
 
 export class ProcedureCall extends SyntaxTreeNode {
-  procedure!: BottomExpr;
+  procedure!: Expr;
   args!: Expr[];
   
   static rule = new Caten(
@@ -359,7 +359,7 @@ export class ProcedureCall extends SyntaxTreeNode {
 export class TypeArguments extends SyntaxTreeNode {
   _TS: 'TypeArguments' = 'TypeArguments'
   
-  expr!: BottomExpr;
+  expr!: Expr;
   args!: Expr[];
   
   static rule = new Caten(
@@ -374,7 +374,7 @@ export class TypeArguments extends SyntaxTreeNode {
 }
 
 export class MemberAccess extends SyntaxTreeNode {
-  expr!: BottomExpr;
+  expr!: Expr;
   op!: Token<'.'> | Token<'?.'>
   memberName!: IdentifierToken;
   
@@ -389,7 +389,7 @@ export class MemberAccess extends SyntaxTreeNode {
 }
 
 export class Negation extends SyntaxTreeNode {
-  expr!: LeftUnaryOpsOrLower;
+  expr!: Expr;
   
   static rule = new Caten(
     token('!'),
@@ -398,7 +398,7 @@ export class Negation extends SyntaxTreeNode {
 }
 
 export class Inverse extends SyntaxTreeNode {
-  expr!: LeftUnaryOpsOrLower;
+  expr!: Expr;
   
   static rule = new Caten(
     token('-'),
@@ -407,7 +407,7 @@ export class Inverse extends SyntaxTreeNode {
 }
 
 export class Await extends SyntaxTreeNode {
-  expr!: LeftUnaryOpsOrLower;
+  expr!: Expr;
   
   static rule = new Caten(
     token('await'),
@@ -416,7 +416,7 @@ export class Await extends SyntaxTreeNode {
 }
 
 export class Nowait extends SyntaxTreeNode {
-  expr!: LeftUnaryOpsOrLower;
+  expr!: Expr;
   
   static rule = new Caten(
     token('nowait'),
@@ -425,7 +425,7 @@ export class Nowait extends SyntaxTreeNode {
 }
 
 export class Complement extends SyntaxTreeNode {
-  expr!: LeftUnaryOpsOrLower;
+  expr!: Expr;
   
   static rule = new Caten(
     token('~'),
@@ -434,7 +434,7 @@ export class Complement extends SyntaxTreeNode {
 }
 
 export class LeftUnaryPrefix extends SyntaxTreeNode {
-  expr!: LeftUnaryOpsOrLower;
+  expr!: Expr;
   token!: Token<'|'> | Token<'&'>;
   
   static rule = new Caten(
@@ -447,8 +447,8 @@ export class LeftUnaryPrefix extends SyntaxTreeNode {
 }
 
 export class Mul extends SyntaxTreeNode {
-  left!: LeftUnaryOpsOrLower;
-  rite!: LeftUnaryOpsOrLower;
+  left!: Expr;
+  rite!: Expr;
   
   static rule = new Caten(
     new Match(false, 'left', LeftUnaryOpsRung),
@@ -458,8 +458,8 @@ export class Mul extends SyntaxTreeNode {
 }
 
 export class Div extends SyntaxTreeNode {
-  left!: LeftUnaryOpsOrLower;
-  rite!: LeftUnaryOpsOrLower;
+  left!: Expr;
+  rite!: Expr;
   
   static rule = new Caten(
     new Match(false, 'left', LeftUnaryOpsRung),
@@ -469,8 +469,8 @@ export class Div extends SyntaxTreeNode {
 }
 
 export class Add extends SyntaxTreeNode {
-  left!: MulDivOpsOrLower;
-  rite!: MulDivOpsOrLower;
+  left!: Expr;
+  rite!: Expr;
   
   static rule = new Caten(
     new Match(false, 'left', MulDivOpsRung),
@@ -480,8 +480,8 @@ export class Add extends SyntaxTreeNode {
 }
 
 export class Sub extends SyntaxTreeNode {
-  left!: MulDivOpsOrLower;
-  rite!: MulDivOpsOrLower;
+  left!: Expr;
+  rite!: Expr;
   
   static rule = new Caten(
     new Match(false, 'left', MulDivOpsRung),
@@ -491,7 +491,7 @@ export class Sub extends SyntaxTreeNode {
 }
 
 export class Equals extends SyntaxTreeNode {
-  exprs!: AddSubOpsOrLower[];
+  exprs!: Expr[];
   
   static rule = new Repeat(
     new Match(true, 'exprs', AddSubOpsRung),
@@ -503,8 +503,8 @@ export class Equals extends SyntaxTreeNode {
 }
 
 export class NotEquals extends SyntaxTreeNode {
-  left!: AddSubOpsOrLower;
-  rite!: AddSubOpsOrLower;
+  left!: Expr;
+  rite!: Expr;
   
   static rule = new Caten(
     new Match(false, 'left', AddSubOpsRung),
@@ -514,7 +514,7 @@ export class NotEquals extends SyntaxTreeNode {
 }
 
 export class Comparison extends SyntaxTreeNode {
-  exprs!: AddSubOpsOrLower[];
+  exprs!: Expr[];
   operators!: (Token<'<'> | Token<'<='> | Token<'=='> | Token<'!='>)[];
   
   static rule = new Repeat(new Match(true, 'exprs', AddSubOpsRung), {
@@ -529,8 +529,8 @@ export class Comparison extends SyntaxTreeNode {
 }
 
 export class AndExpr extends SyntaxTreeNode {
-  left!: ComparisonOrLower;
-  rite!: AndExprOrLower;
+  left!: Expr;
+  rite!: Expr;
   
   static rule = new Caten(
     new Match(false, 'left', ComparisonRung),
@@ -540,8 +540,8 @@ export class AndExpr extends SyntaxTreeNode {
 }
 
 export class OrExpr extends SyntaxTreeNode {
-  left!: AndExprOrLower;
-  rite!: OrExprOrLower;
+  left!: Expr;
+  rite!: Expr;
   
   static rule = new Caten(
     new Match(false, 'left', AndExprRung),
@@ -551,8 +551,8 @@ export class OrExpr extends SyntaxTreeNode {
 }
 
 export class Intersection extends SyntaxTreeNode {
-  left!: IntersectionOrLower;
-  rite!: ComparisonOrLower;
+  left!: Expr;
+  rite!: Expr;
   
   static rule = new Caten(
     new Match(false, 'left', IntersectionRung),
@@ -562,8 +562,8 @@ export class Intersection extends SyntaxTreeNode {
 }
 
 export class Union extends SyntaxTreeNode {
-  left!: UnionOrLower;
-  rite!: IntersectionOrLower;
+  left!: Expr;
+  rite!: Expr;
   
   static rule = new Caten(
     new Match(false, 'left', UnionRung),
@@ -574,8 +574,8 @@ export class Union extends SyntaxTreeNode {
 
 // TODO split into MayBecome `>` and WillBecome `~>`?
 export class Becomes extends SyntaxTreeNode {
-  left!: UnionOrLower;
-  rite!: UnionOrLower;
+  left!: Expr;
+  rite!: Expr;
   
   static rule = new Caten(
     new Match(false, 'left', UnionRung),
@@ -638,7 +638,7 @@ export class DestructuredMembers extends SyntaxTreeNode {
 matchTypeDestructuredMembers.match = DestructuredMembers;
 
 export class With extends SyntaxTreeNode {
-  expr!: BecomesOrLower;
+  expr!: Expr;
   members!: DestructuredMembers;
   
   static rule = new Caten(
@@ -649,9 +649,9 @@ export class With extends SyntaxTreeNode {
 }
 
 export class Conditional extends SyntaxTreeNode {
-  condition!: WithOrLower;
+  condition!: Expr;
   ifPos!: Expr | null;
-  ifNeg!: ConditionalOrLower | null;
+  ifNeg!: Expr | null;
   
   static rule = new Caten(
     new Match(false, 'cond', WithRung),
@@ -677,8 +677,8 @@ export class Conditional extends SyntaxTreeNode {
 // Alternatives: `<<` (`<<*`) or `<:` (`<:*`) or `asn [left] :=`
 // TODO change grammar to?: asn [left]: newType := [rite]
 export class Assignment extends SyntaxTreeNode {
-  left!: UnionOrLower | DestructuredMembers;
-  rite!: ComparisonOrLower;
+  left!: Expr | DestructuredMembers;
+  rite!: Expr;
   
   static rule: Caten = new Caten(
     new Or(

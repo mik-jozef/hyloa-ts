@@ -73,7 +73,7 @@ export /* final */ abstract class LibraryId {
   
   isPackageId(): this is PackageId { return !(this instanceof StandardLibrary) }
   
-  abstract toName(folderArr: string[], file: string | null, varName: string): string;
+  abstract toName(folderArr: string[], file: string | null, varName?: string | null): string;
 }
 
 // TODO toFsPath should be a standalone function
@@ -93,11 +93,11 @@ export class StandardLibrary extends LibraryId {
     return id instanceof StandardLibrary;
   }
   
-  toName(folderArr: string[], file: string | null, varName: string): string {
+  toName(folderArr: string[], file: string | null, varName: string | null = null): string {
     const folders = folderArr.map(folder => `_${folder}`);
     const fileStr = file === null ? '' : `_${Case.camel(file)}`;
     
-    return `_${stlib}${folders}${fileStr}_${varName}`;
+    return `_${stlib}${folders}${fileStr}_${varName ?? ''}`;
   }
 }
 
@@ -131,13 +131,13 @@ export class LocalPackageId extends PackageId {
     return new Path(fsFolderArr, file === null ? '.hyloa' : file);
   }
   
-  toName(folderArr: string[], file: string | null, varName: string): string {
+  toName(folderArr: string[], file: string | null, varName: string | null = null): string {
     const project = Case.camel(this.projectName);
     const pkg = Case.camel(this.packageName);
     const folders = folderArr.map(folder => `_${folder}`);
     const fileStr = file === null ? '' : `_${Case.camel(file)}`;
     
-    return `__${project}_${pkg}${folders}${fileStr}_${varName}`;
+    return `__${project}_${pkg}${folders}${fileStr}_${varName ?? ''}`;
   }
   
   equals(id: PackageId) {
@@ -186,7 +186,7 @@ export class PublishedPackageId extends PackageId {
     return new Path(fsFolderArr, file === null ? '.hyloa' : file);
   }
   
-  toName(folderArr: string[], file: string | null, varName: string): string {
+  toName(folderArr: string[], file: string | null, varName: string | null = null): string {
     const registry = Case.camel(this.registry);
     const scope = this.scope === null ? '' : Case.camel(this.scope);
     const name = Case.camel(this.name)
@@ -194,7 +194,7 @@ export class PublishedPackageId extends PackageId {
     const folders = folderArr.map(folder => `_${folder}`);
     const fileStr = file === null ? '' : `_${Case.camel(file)}`;
     
-    return `_${registry}_${scope}_${name}_${version}${folders}${fileStr}_${varName}`;
+    return `_${registry}_${scope}_${name}_${version}${folders}${fileStr}_${varName ?? ''}`;
   }
   
   equals(id: PackageId) {

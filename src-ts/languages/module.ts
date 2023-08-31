@@ -86,7 +86,7 @@ export class ModulePath<Pid extends LibraryId> {
     return this.packageId.toFsPath(this.folderArr, this.file);
   }
   
-  toName(varName: string): string {
+  toName(varName: string | null = null): string {
     return this.packageId.toName(this.folderArr, this.file, varName);
   }
   

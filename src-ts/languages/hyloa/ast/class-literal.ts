@@ -28,7 +28,7 @@ export class ClassMember extends SyntaxTreeNode {
 export class ClassLiteral extends SyntaxTreeNode {
   typeName!: IdentifierToken;
   constructorName!: IdentifierToken;
-  members!: IdentifierToken;
+  members!: ClassMember;
   
   // TODO
   static rule = new Caten(

@@ -73,6 +73,7 @@ export class LetDeclaration extends SyntaxTreeNode {
   _TS: 'LetDeclaration' = 'LetDeclaration';
   
   head!: LetDeclarationHead;
+  asn!: Token<':='> | null;
   body!: (Expr | LetDeclarationHead)[];
   
   static rule = new Caten(
@@ -80,7 +81,7 @@ export class LetDeclaration extends SyntaxTreeNode {
     
     new Or(
       new Caten(
-        token(':='),
+        new Match(false, 'asn', token(':=')),
         matchBodyExprRung,
       ),
       new Caten(

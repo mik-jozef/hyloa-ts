@@ -1,4 +1,15 @@
-import { Caten, IdentifierToken, Match, Maybe, Or, Repeat, SyntaxTreeNode, Token } from "lr-parser-typescript";
+import {
+  Caten,
+  IdentifierToken,
+  Match,
+  Maybe,
+  NumberToken,
+  Or,
+  Repeat,
+  SyntaxTreeNode,
+  TextToken,
+  Token
+} from "lr-parser-typescript";
 
 import { ClassLiteral, matchTypeExprRung as matchTypeExprRung0 } from "./class-literal.js";
 import { matchMembersDestructuredMembers } from "./hyloa-import-ast.js";
@@ -47,13 +58,17 @@ const matchValueExprRung = new Match(false, 'value', null!);
 export class StringLiteral extends SyntaxTreeNode {
   _TS: 'StringLiteral' = 'StringLiteral'
   
-  static rule = token('text');
+  value!: TextToken;
+  
+  static rule = new Match(false, 'value', token('text'));
 }
 
 export class NumberLiteral extends SyntaxTreeNode {
   _TS: 'NumberLiteral' = 'NumberLiteral'
   
-  static rule = token('number');
+  value!: NumberToken;
+  
+  static rule = new Match(false, 'value', token('number'));
 }
 
 export class TextLiteral extends SyntaxTreeNode {

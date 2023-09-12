@@ -1655,10 +1655,10 @@ locate-path@^5.0.0:
   dependencies:
     p-locate "^4.1.0"
 
-lr-parser-typescript@^0.3.3:
-  version "0.3.3"
-  resolved "https://registry.yarnpkg.com/lr-parser-typescript/-/lr-parser-typescript-0.3.3.tgz#e0baba3d84a7a211e14fa3c875c8394608e6d2ec"
-  integrity sha512-kPQZyPTlv4BJZC394NzEM74LoVSYwDzPDOaw5jFRtfRX+IOTHeQey30be/x5WdkzG1tBnv0ZZKzTM+MUlVDRYw==
+lr-parser-typescript@^0.4.0:
+  version "0.4.0"
+  resolved "https://registry.yarnpkg.com/lr-parser-typescript/-/lr-parser-typescript-0.4.0.tgz#4864d67f3ecb12f043999622d0d2be0177e0eb4a"
+  integrity sha512-PNCGy4fEBKacrtdXAo5sJOedkBOQfTMpOt2Gtq6/vV6PfU4+fehS4BsbXuHDSFtI0FFMg0K7ULLkm0IYDuskQA==
 
 lru-cache@^5.1.1:
   version "5.1.1"

@@ -664,7 +664,7 @@ export class With extends SyntaxTreeNode {
 }
 
 export class Conditional extends SyntaxTreeNode {
-  condition!: Expr;
+  cond!: Expr;
   ifPos!: Expr | null;
   ifNeg!: Expr | null;
   

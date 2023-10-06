@@ -97,7 +97,7 @@ export class StandardLibrary extends LibraryId {
     const folders = folderArr.map(folder => `_${folder}`);
     const fileStr = file === null ? '' : `_${Case.camel(file)}`;
     
-    return `_${stlib}${folders}${fileStr}_${varName ?? ''}`;
+    return `___${stlib}${folders}${fileStr}_${varName ?? ''}`;
   }
 }
 
@@ -131,13 +131,17 @@ export class LocalPackageId extends PackageId {
     return new Path(fsFolderArr, file === null ? '.hyloa' : file);
   }
   
+  // `__project-name_package-name__path_path_file_varName`, or
+  // `__project-name__path_path_file_varName`.
   toName(folderArr: string[], file: string | null, varName: string | null = null): string {
     const project = Case.camel(this.projectName);
     const pkg = Case.camel(this.packageName);
     const folders = folderArr.map(folder => `_${folder}`);
     const fileStr = file === null ? '' : `_${Case.camel(file)}`;
     
-    return `__${project}_${pkg}${folders}${fileStr}_${varName ?? ''}`;
+    // TODO package can be null (right? If there's no project.json and there
+    //  is package.json instead).
+    return `__${project}_${pkg}_${folders}${fileStr}_${varName ?? ''}`;
   }
   
   equals(id: PackageId) {

@@ -43,7 +43,7 @@ import { Target } from './compile-targets/targets.js';
 
 
 const __filename = fileURLToPath(import.meta.url);
-const __dirname = dirname(__filename);
+const __dirname = dirname(__filename); // Includes `local/out`.
 const parserTablePath = (lang: string) => __dirname + `/../../src-ts/languages/${lang}/parser-tables.json`;
 
 const parserMap = {

@@ -1,0 +1,15 @@
+{
+  "testMatch": [ "**/*.test.ts?(x)" ],
+  "transform": {
+    "^.+\\.tsx?$": [ "ts-jest", {
+      "useESM": true,
+      "tsconfig": "tsconfig.json",
+      "diagnostics": false,
+      "diagnostics: { \"warnOnly\": true } // TODO this ought to work, but doesn't :/": null
+    } ]
+  },
+  "moduleNameMapper": {
+    "^(.*)\\.js$": "$1"
+  },
+  "extensionsToTreatAsEsm": [ ".ts" ]
+}

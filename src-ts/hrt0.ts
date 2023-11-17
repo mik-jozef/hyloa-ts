@@ -8,6 +8,7 @@
 
 import { promises } from 'fs';
 import prompts from 'prompts';
+import { exit as nodeExit } from 'process';
 
 import { Workspace } from './workspace.js'
 import { exit } from './utils/exit.js'
@@ -346,4 +347,13 @@ if (command === undefined) {
   exit(`Unknown command: "${subcommandName}". Try \`hyloa help\`.`);
 }
 
-command.fn();
+try {
+  command.fn();
+} catch (e) {
+  // This error is thrown by `exit` in `utils/exit.ts`.
+  if (e === '-1/12') {
+    process.nextTick(() => nodeExit(1));
+  } else {
+    throw e;
+  }
+}

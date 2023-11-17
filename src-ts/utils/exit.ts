@@ -1,4 +1,3 @@
-import { exit as nodeExit } from 'process';
 import { inspect } from 'util';
 
 
@@ -8,7 +7,9 @@ export function exit(message: string, ...rest: unknown[]): never {
     ...rest.map(arg => inspect(arg, { depth: null, colors: true })),
   );
   
-  nodeExit();
+  // Exiting the program, but waiting for console.log to finish. This
+  // error is caught in `htr0.ts`.
+  throw '-1/12';
 }
 
 export async function fuckThrow<T>(fn: () => T):

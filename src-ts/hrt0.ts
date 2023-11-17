@@ -30,13 +30,17 @@ import { Target, targets } from './compile-targets/targets.js';
   TODO what about the arguments? Eg. `@file(../fs/path)`?
 /*/
 
-const [ , commandName, subcommandName = null, ...args ] = process.argv
+const [ _nodePath, commandPath, subcommandName = null, ...args ] = process.argv
 const cwd = process.cwd();
 
-const allowedCommandNames = [ 'hyloa', 'hyloa-live' ];
+const commandPathRegex = /\/(?<commandName>hyloa(?:-live(?:-[a-z0-9]+)*)?)$/;
+const commandName = commandPathRegex.exec(commandPath as string)?.groups?.commandName ?? null;
 
-if (!allowedCommandNames.some(name => commandName?.endsWith(name))) {
-  exit('The command name must be either "hyloa" or "hyloa-live".', commandName);
+if (!commandName) {
+  exit(
+    'The command name must be either "hyloa" or "hyloa-live(-*)".\n\nSee also `/scripts/command-create.js`.',
+    { commandPath, regex: commandPathRegex },
+  );
 }
 
 function createWorkspace() {
@@ -329,7 +333,7 @@ You can use the "help" command to get more details about a particular command.`)
 }
 
 if (subcommandName === null) {
-  exit(''
+  exit('' // TODO remove TODOS
     + 'Hyloa compiler version: TODO\n'
     + 'Official website: https://TODO.com\n'
     + 'Use `hyloa help` for a list of commands.',

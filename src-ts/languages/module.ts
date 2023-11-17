@@ -2,7 +2,7 @@ import { exit } from '../utils/exit.js';
 import { Path } from '../utils/fs.js';
 import { Import, ImportAst } from './import.js';
 import { LibraryId, LocalPackageId, PackageId, PackageJson, PublishedPackageId } from './package.js';
-import { SyntaxTreeNode as makeSyntaxTreeNode } from 'lr-parser-typescript';
+import { SyntaxTreeNode } from 'lr-parser-typescript';
 
 
 /*/
@@ -103,7 +103,7 @@ export class ModulePath<Pid extends LibraryId> {
 }
 
 
-export abstract class ModuleAst extends makeSyntaxTreeNode {
+export abstract class ModuleAst extends SyntaxTreeNode {
   abstract imports: ImportAst[];
 }
 

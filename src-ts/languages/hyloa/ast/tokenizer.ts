@@ -1,4 +1,4 @@
-import { Tokenizer as tokenizers } from 'lr-parser-typescript';
+import { createTokenizer } from "../../create-tokenizer.js";
 
 export type TokenString = typeof tokenStringArray[number];
 export const tokenStringArray = [
@@ -48,6 +48,7 @@ export const tokenStringArray = [
   '>>',
   '&&',
   '||',
+  '::',
   '$0',
   '$1',
   '$2',
@@ -58,6 +59,5 @@ export const tokenStringArray = [
   '%','^','&','*',';',':','\'','\\','|','/','?','`','~', '+', '-',
 ] as const;
 
-export const hyloaTokenizer = new tokenizers(tokenStringArray);
+export const hyloaTokenizer = createTokenizer(tokenStringArray);
 
-export const token = hyloaTokenizer.token;

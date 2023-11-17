@@ -1,25 +1,26 @@
-import { Caten, IdentifierToken, Match, Maybe, Or, Repeat, SyntaxTreeNode } from 'lr-parser-typescript';
+import { Caten, Match, MatchArr, Maybe, Or, Repeat, SyntaxTreeNode } from 'lr-parser-typescript';
 
 import { ModuleAst } from '../../module.js';
-import { token } from './tokenizer.js';
+import { IdentifierToken } from '../../create-tokenizer.js';
 
-const matchValueObjectLiteral = new Match(false, 'value', null!);
-const matchValueProcedureCall = new Match(false, 'value', null!);
-const matchValueTypeArguments = new Match(false, 'value', null!);
-const matchValueMemberAccess = new Match(false, 'value', null!);
-const matchValueAwait = new Match(false, 'value', null!);
-const matchValueComplement = new Match(false, 'value', null!);
-const matchValueEquals = new Match(false, 'value', null!);
-const matchValueIntersection = new Match(false, 'value', null!);
-const matchValueUnion = new Match(false, 'value', null!);
-const matchValueBecomes = new Match(false, 'value', null!);
-const matchValueConditional = new Match(false, 'value', null!);
-const matchValueAssignment = new Match(false, 'value', null!);
-const matchValueReturn = new Match(false, 'value', null!);
-const matchValueUniversalQuantifier = new Match(false, 'value', null!);
-const matchValueExistentialQuantifier = new Match(false, 'value', null!);
-const matchValueLetDeclaration = new Match(false, 'value', null!);
-const matchValueExprRung = new Match(false, 'value', null!);
+
+const matchValueObjectLiteral = new Match('value', null!);
+const matchValueProcedureCall = new Match('value', null!);
+const matchValueTypeArguments = new Match('value', null!);
+const matchValueMemberAccess = new Match('value', null!);
+const matchValueAwait = new Match('value', null!);
+const matchValueComplement = new Match('value', null!);
+const matchValueEquals = new Match('value', null!);
+const matchValueIntersection = new Match('value', null!);
+const matchValueUnion = new Match('value', null!);
+const matchValueBecomes = new Match('value', null!);
+const matchValueConditional = new Match('value', null!);
+const matchValueAssignment = new Match('value', null!);
+const matchValueReturn = new Match('value', null!);
+const matchValueUniversalQuantifier = new Match('value', null!);
+const matchValueExistentialQuantifier = new Match('value', null!);
+const matchValueLetDeclaration = new Match('value', null!);
+const matchValueExprRung = new Match('value', null!);
 
 type BottomExprs =
   | ObjectLiteral
@@ -32,16 +33,16 @@ type BottomExprs =
 export class BottomRung extends SyntaxTreeNode {
   static hidden = true;
   
-  static rule = new Or(
+  static pattern = new Or(
     matchValueObjectLiteral,
-    new Match(false, 'value', token('identifier')),
+    new Match('value', 'identifier'),
     matchValueProcedureCall,
     matchValueTypeArguments,
     matchValueMemberAccess,
     new Caten(
-      token('('),
+      '(',
       matchValueExprRung,
-      token(')'),
+      ')',
     ),
   )
 }
@@ -55,10 +56,10 @@ type LeftUnaryOpsOrLower =
 export class LeftUnaryOpsRung extends SyntaxTreeNode {
   static hidden = true;
   
-  static rule = new Or(
+  static pattern = new Or(
     matchValueAwait,
     matchValueComplement,
-    new Match( false, 'value', BottomRung ),
+    new Match('value', BottomRung),
   );
 }
 
@@ -70,9 +71,9 @@ export type EqualsOrLower =
 export class EqualsRung extends SyntaxTreeNode {
   static hidden = true;
   
-  static rule = new Or(
+  static pattern = new Or(
     matchValueEquals,
-    new Match(false, 'value', LeftUnaryOpsRung),
+    new Match('value', LeftUnaryOpsRung),
   );
 }
 
@@ -84,9 +85,9 @@ export type IntersectionOrLower =
 export class IntersectionRung extends SyntaxTreeNode {
   static hidden = true;
   
-  static rule = new Or(
+  static pattern = new Or(
     matchValueIntersection,
-    new Match(false, 'value', EqualsRung),
+    new Match('value', EqualsRung),
   );
 }
 
@@ -98,9 +99,9 @@ export type UnionOrLower =
 export class UnionRung extends SyntaxTreeNode {
   static hidden = true;
   
-  static rule = new Or(
+  static pattern = new Or(
     matchValueUnion,
-    new Match(false, 'value', IntersectionRung),
+    new Match('value', IntersectionRung),
   );
 }
 
@@ -112,9 +113,9 @@ export type BecomesOrLower =
 export class BecomesRung extends SyntaxTreeNode {
   static hidden = true;
   
-  static rule = new Or(
+  static pattern = new Or(
     matchValueBecomes,
-    new Match(false, 'value', UnionRung),
+    new Match('value', UnionRung),
   );
 }
 
@@ -126,10 +127,10 @@ export type ConditionalOrLower =
 export class ConditionalRung extends SyntaxTreeNode {
   static hidden = true;
   
-  static rule = new Or(
+  static pattern = new Or(
     matchValueConditional,
     matchValueAssignment,
-    new Match(false, 'value', BecomesRung),
+    new Match('value', BecomesRung),
   );
 }
 
@@ -144,12 +145,12 @@ export type Expr =
 export class ExprRung extends SyntaxTreeNode {
   static hidden = true;
   
-  static rule = new Or(
+  static pattern = new Or(
     matchValueReturn,
     matchValueUniversalQuantifier,
     matchValueExistentialQuantifier,
     matchValueLetDeclaration,
-    new Match(false, 'value', ConditionalRung),
+    new Match('value', ConditionalRung),
   );
 }
 
@@ -160,18 +161,18 @@ class LetDeclarationParameter extends SyntaxTreeNode {
   defaultArg!: Expr;
   type!: Expr;
   
-  static rule: Caten = new Caten(
-    new Match(false, 'name', token('identifier')),
+  static pattern: Caten = new Caten(
+    new Match('name', 'identifier'),
     new Maybe(
       new Caten(
-        token(':'),
-        new Match(false, 'type', ExprRung),
+        ':',
+        new Match('type', ExprRung),
       ),
     ),
     new Maybe(
       new Caten(
-        token(':='),
-        new Match(false, 'defaultArg', ExprRung),
+        ':=',
+        new Match('defaultArg', ExprRung),
       ),
     ),
   );
@@ -183,43 +184,43 @@ export class LetDeclaration extends SyntaxTreeNode {
   type!: Expr;
   body!: Expr;
   
-  static rule: Caten = new Caten(
-    token('let'),
-    new Maybe(new Match(false, 'name', token('identifier'))),
+  static pattern: Caten = new Caten(
+    'let',
+    new Maybe(new Match('name', 'identifier')),
     
     new Maybe(
       new Caten(
-        token('('),
-        new Repeat(new Match(true, 'params', LetDeclarationParameter), {
-          delimiter: token(','),
+        '(',
+        new Repeat(new MatchArr('params', LetDeclarationParameter), {
+          delimiter: ',',
           trailingDelimiter: true,
         }),
-        token(')'),
+        ')',
       ),
     ),
     
     new Maybe(
       new Caten(
-        token(':'),
-        new Match(false, 'type', ExprRung),
+        ':',
+        new Match('type', ExprRung),
       ),
     ),
     
     new Or(
       new Caten(
-        token(':='),
-        new Match(true, 'body', ExprRung),
+        ':=',
+        new MatchArr('body', ExprRung),
       ),
       new Caten(
-        token('{'),
+        '{',
         new Repeat(
-          new Match(true, 'body', ExprRung),
+          new MatchArr('body', ExprRung),
           {
-            delimiter: token(';'),
+            delimiter: ';',
             trailingDelimiter: true,
           },
         ),
-        token('}'),
+        '}',
       ),
     ),
   );
@@ -229,23 +230,23 @@ class ObjectProperty extends SyntaxTreeNode {
   name!: IdentifierToken;
   value!: Expr;
   
-  static rule = new Caten(
-    new Match(false, 'name', token('identifier')),
-    token(':'),
-    new Match(false, 'value', ExprRung),
+  static pattern = new Caten(
+    new Match('name', 'identifier'),
+    ':',
+    new Match('value', ExprRung),
   );
 }
 
 export class ObjectLiteral extends SyntaxTreeNode {
   properties!: ObjectProperty[];
   
-  static rule = new Caten(
-    token('{'),
-    new Repeat(new Match(true, 'properties', ObjectProperty), {
-      delimiter: token(','),
+  static pattern = new Caten(
+    '{',
+    new Repeat(new MatchArr('properties', ObjectProperty), {
+      delimiter: ',',
       trailingDelimiter: true,
     }),
-    token('}'),
+    '}',
   );
 }
 
@@ -253,26 +254,26 @@ export class ProcedureCall extends SyntaxTreeNode {
   procedure!: BottomExprs;
   args!: Expr[];
   
-  static rule = new Caten(
-    new Match(false, 'procedure', BottomRung),
-    token('('),
-    new Repeat(new Match(true, 'args', ExprRung), {
-      delimiter: token(','),
+  static pattern = new Caten(
+    new Match('procedure', BottomRung),
+    '(',
+    new Repeat(new MatchArr('args', ExprRung), {
+      delimiter: ',',
       trailingDelimiter: true,
     }),
-    token(')'),
+    ')',
   );
 }
 
 export class TypeArguments extends SyntaxTreeNode {
-  static rule = new Caten(
-    new Match(false, 'expr', BottomRung),
-    token('['),
-    new Repeat(new Match(true, 'args', ExprRung), {
-      delimiter: token(','),
+  static pattern = new Caten(
+    new Match('expr', BottomRung),
+    '[',
+    new Repeat(new MatchArr('args', ExprRung), {
+      delimiter: ',',
       trailingDelimiter: true,
     }),
-    token(']'),
+    ']',
   );
 }
 
@@ -280,28 +281,28 @@ export class MemberAccess extends SyntaxTreeNode {
   expr!: BottomExprs;
   memberName!: IdentifierToken;
   
-  static rule = new Caten(
-    new Match(false, 'expr', BottomRung),
-    token('.'),
-    new Match(false, 'memberName', token('identifier')),
+  static pattern = new Caten(
+    new Match('expr', BottomRung),
+    '.',
+    new Match('memberName', 'identifier'),
   );
 }
 
 export class Await extends SyntaxTreeNode {
   expr!: LeftUnaryOpsOrLower;
   
-  static rule = new Caten(
-    token('await'),
-    new Match(false, 'expr', LeftUnaryOpsRung),
+  static pattern = new Caten(
+    'await',
+    new Match('expr', LeftUnaryOpsRung),
   );
 }
 
 export class Complement extends SyntaxTreeNode {
   expr!: LeftUnaryOpsOrLower;
   
-  static rule = new Caten(
-    token('~'),
-    new Match(false, 'expr', LeftUnaryOpsRung),
+  static pattern = new Caten(
+    '~',
+    new Match('expr', LeftUnaryOpsRung),
   );
 }
 
@@ -309,10 +310,10 @@ export class Equals extends SyntaxTreeNode {
   left!: LeftUnaryOpsOrLower;
   rite!: LeftUnaryOpsOrLower;
   
-  static rule = new Caten(
-    new Match(false, 'left', LeftUnaryOpsRung),
-    token('==='),
-    new Match(false, 'rite', LeftUnaryOpsRung),
+  static pattern = new Caten(
+    new Match('left', LeftUnaryOpsRung),
+    '===',
+    new Match('rite', LeftUnaryOpsRung),
   );
 }
 
@@ -320,10 +321,10 @@ export class Intersection extends SyntaxTreeNode {
   left!: IntersectionOrLower;
   rite!: EqualsRung;
   
-  static rule = new Caten(
-    new Match(false, 'left', IntersectionRung),
-    token('&'),
-    new Match(false, 'rite', EqualsRung),
+  static pattern = new Caten(
+    new Match('left', IntersectionRung),
+    '&',
+    new Match('rite', EqualsRung),
   );
 }
 
@@ -331,10 +332,10 @@ export class Union extends SyntaxTreeNode {
   left!: UnionOrLower;
   rite!: IntersectionOrLower;
   
-  static rule = new Caten(
-    new Match(false, 'left', UnionRung),
-    token('|'),
-    new Match(false, 'rite', IntersectionRung),
+  static pattern = new Caten(
+    new Match('left', UnionRung),
+    '|',
+    new Match('rite', IntersectionRung),
   );
 }
 
@@ -342,10 +343,10 @@ export class Becomes extends SyntaxTreeNode {
   left!: UnionOrLower;
   rite!: UnionOrLower;
   
-  static rule = new Caten(
-    new Match(false, 'left', UnionRung),
-    token('>>'),
-    new Match(false, 'rite', UnionRung),
+  static pattern = new Caten(
+    new Match('left', UnionRung),
+    '>>',
+    new Match('rite', UnionRung),
   );
 }
 
@@ -354,12 +355,12 @@ export class Conditional extends SyntaxTreeNode {
   ifPos!: Expr | null;
   ifNeg!: ConditionalOrLower | null;
   
-  static rule = new Caten(
-    new Match(false, 'cond', BecomesRung),
-    token('then'),
-    new Match(false, 'ifPos', ExprRung),
-    token('else'),
-    new Match(false, 'ifNeg', ConditionalRung),
+  static pattern = new Caten(
+    new Match('cond', BecomesRung),
+    'then',
+    new Match('ifPos', ExprRung),
+    'else',
+    new Match('ifNeg', ConditionalRung),
   );
 }
 
@@ -367,19 +368,19 @@ export class Assignment extends SyntaxTreeNode {
   left!: UnionOrLower;
   rite!: LeftUnaryOpsOrLower;
   
-  static rule: Caten = new Caten(
-    new Match(false, 'left', UnionRung),
-    token('<<'),
-    new Match(false, 'rite', LeftUnaryOpsRung),
+  static pattern: Caten = new Caten(
+    new Match('left', UnionRung),
+    '<<',
+    new Match('rite', LeftUnaryOpsRung),
   );
 }
 
 export class Return extends SyntaxTreeNode {
   expr!: Expr;
   
-  static rule: Caten = new Caten(
-    token('return'),
-    new Match(false, 'expr', ExprRung),
+  static pattern: Caten = new Caten(
+    'return',
+    new Match('expr', ExprRung),
   );
 }
 
@@ -388,17 +389,17 @@ export class UniversalQuantifier extends SyntaxTreeNode {
   domain!: Expr;
   body!: Expr;
   
-  static rule: Caten = new Caten(
-    token('All'),
-    new Match(false, 'varName', token('identifier')),
+  static pattern: Caten = new Caten(
+    'All',
+    new Match('varName', 'identifier'),
     new Maybe(
       new Caten(
-        token(':'),
-        new Match(false, 'domain', ExprRung),
+        ':',
+        new Match('domain', ExprRung),
       ),
     ),
-    token('..'),
-    new Match(false, 'body', ExprRung),
+    '..',
+    new Match('body', ExprRung),
   );
 }
 
@@ -407,17 +408,17 @@ export class ExistentialQuantifier extends SyntaxTreeNode {
   domain!: Expr;
   body!: Expr;
   
-  static rule: Caten = new Caten(
-    token('Ex'),
-    new Match(false, 'varName', token('identifier')),
+  static pattern: Caten = new Caten(
+    'Ex',
+    new Match('varName', 'identifier'),
     new Maybe(
       new Caten(
-        token(':'),
-        new Match(false, 'domain', ExprRung),
+        ':',
+        new Match('domain', ExprRung),
       ),
     ),
-    token('..'),
-    new Match(false, 'body', ExprRung),
+    '..',
+    new Match('body', ExprRung),
   );
 }
 
@@ -444,11 +445,11 @@ export class SiresModuleAst extends ModuleAst {
   imports = [];
   defs!: LetDeclaration[];
 
-  static rule = new Caten(
+  static pattern = new Caten(
     new Repeat(
       new Caten(
-        new Match(true, 'defs', LetDeclaration),
-        token(';'),
+        new MatchArr('defs', LetDeclaration),
+        ';',
       ),
     ),
   );

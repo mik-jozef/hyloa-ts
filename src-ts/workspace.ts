@@ -20,7 +20,7 @@
     the project.
 /*/
 
-import { Parser } from 'lr-parser-typescript';
+import { Parser, SerializedParserTable } from 'lr-parser-typescript';
 import { dirname } from 'path';
 import { fileURLToPath } from 'url';
 
@@ -40,17 +40,43 @@ import { exit } from './utils/exit.js';
 import { FolderHandle } from "./utils/fs.js";
 import { JsonValidationError } from './utils/json-validation-error.js';
 import { Target } from './compile-targets/targets.js';
+import hyloaParserTable from './languages/hyloa/parser-table.json' assert { type: 'json' };
+import lyoParserTable from './languages/lyo/parser-table.json' assert { type: 'json' };
+import siresParserTable from './languages/sires/parser-table.json' assert { type: 'json' };
 
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename); // Includes `local/out`.
-const parserTablePath = (lang: string) => __dirname + `/../../src-ts/languages/${lang}/parser-tables.json`;
+const parserTablePath = (lang: string) => __dirname + `/../../src-ts/languages/${lang}/parser-table.json`;
+
+const regenerateGrammar: ('hyloa' | 'lyo' | 'sires')[] = [];
 
 const parserMap = {
-  hyloa: new Parser(hyloaTokenizer, HyloaModuleAst, parserTablePath('hyloa')),
-  lyo: new Parser(lyoTokenizer, LyoModuleAst, parserTablePath('lyo')),
-  sires: new Parser(siresTokenizer, SiresModuleAst, parserTablePath('sires')),
+  hyloa: new Parser(HyloaModuleAst, {
+    tokenizer: hyloaTokenizer,
+    serializedParserTable: regenerateGrammar.includes('hyloa') ? null : hyloaParserTable as unknown as SerializedParserTable,
+  }),
+  lyo: new Parser(LyoModuleAst, {
+    tokenizer: lyoTokenizer,
+    serializedParserTable: regenerateGrammar.includes('lyo') ? null : lyoParserTable as unknown  as SerializedParserTable,
+  }),
+  sires: new Parser(SiresModuleAst, {
+    tokenizer: siresTokenizer,
+    serializedParserTable: regenerateGrammar.includes('sires') ? null : siresParserTable as unknown as SerializedParserTable,
+  }),
 };
+
+regenerateGrammar.includes('hyloa') &&
+    parserMap.hyloa.saveParserTable(parserTablePath('hyloa'))
+      .then(() => console.log('Saved hyloa parser table.'));
+
+regenerateGrammar.includes('lyo') &&
+    parserMap.lyo.saveParserTable(parserTablePath('lyo'))
+      .then(() => console.log('Saved lyo parser table.'));
+
+regenerateGrammar.includes('sires') &&
+    parserMap.sires.saveParserTable(parserTablePath('sires'))
+      .then(() => console.log('Saved sires parser table.'));
 
 type ParserInMap = typeof parserMap[keyof typeof parserMap];
 

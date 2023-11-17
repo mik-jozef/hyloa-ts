@@ -1,21 +1,20 @@
-import { Caten, Match, Maybe, MergedTokens, Or, Repeat, SyntaxTreeNode, Token } from "lr-parser-typescript";
+import { Caten, Match, Maybe, Or, RawNode, Repeat, SyntaxTreeNode, Token } from "lr-parser-typescript";
 import { exit } from "../../../utils/exit.js";
 import { ImportAst } from "../../import.js";
 import { ParsedPath } from "../../module.js";
+import { IdentifierToken } from "../../create-tokenizer.js";
 
-import { token } from "./tokenizer.js";
 
-
-export const matchMembersDestructuredMembers = new Match(false, 'members', null!);
+export const matchMembersDestructuredMembers = new Match('members', null!);
 
 /*/
-  Example imports. A file must have an extension, a folder
-  must not.
+  Example imports. A file must have an extension, a folder must
+  not.
   
   ```
     // "#legacy" is a version alias
-    import @npm mik-jozef:http-server#legacy/server/port.hyloa
-    import @npm http-server/server/port.hyloa
+    import ::npm mik-jozef:http-server#legacy/server/port.hyloa
+    import ::npm http-server/server/port.hyloa
     import mik-jozef:http-server/server/port.hyloa
     import http-server/server/port.hyloa
     import /foo/bar.hyloa
@@ -26,37 +25,39 @@ export const matchMembersDestructuredMembers = new Match(false, 'members', null!
 class KebabCase extends SyntaxTreeNode {
   rest!: KebabCase | null;
   
-  static rule = new Repeat(token('identifier'), {
-    delimiter: token('-'),
+  static pattern = new Repeat('identifier', {
+    delimiter: '-',
     lowerBound: 1,
   });
 }
 
 export type ExternalImportAst = HyloaImportAst & { parsedPath: ParsedPath };
 
-// TODO proper types in the parser.
-type Raw<T> = T; // Let's cheat a little.
-
 export class HyloaImportAst extends ImportAst {
   // Matched so we can anchor errors at the keyword position.
   importKeyword!: Token<'import'>;
-  pathMergedTokens!: MergedTokens;
+  pathTokens!: Token<string>[];
   
   path: string;
   parsedPath: ParsedPath | null;
   
-  constructor(obj: Raw<HyloaImportAst>) {
+  constructor(obj: RawNode) {
     super(obj);
     
-    this.path = obj.pathMergedTokens.value;
+    this.path = this.pathTokens
+      .map((token) => {
+        return token instanceof IdentifierToken ? token.value : token.kind;
+      })
+      .join('');
+    
     this.parsedPath = this.parsePath(this.path);
   }
   
   // TODO fix the grammar
-  static rule = new Caten(
-    new Match(false, 'importKeyword', token('import')),
+  static pattern = new Caten(
+    new Match('importKeyword', 'import'),
     
-    new Match(false, 'pathMergedTokens',
+    new Match('pathTokens',
       new Caten(
         new Or(
           new Caten(),
@@ -64,27 +65,27 @@ export class HyloaImportAst extends ImportAst {
           new Caten(
             new Maybe(
               new Caten(
-                token('@'),
-                new Match(false, '_unused-registry', KebabCase),
+                '::',
+                new Match('_unused-registry', KebabCase),
               ),
             ),
             new Maybe(
               new Caten(
-                token('$0'),
-                new Match(false, '_unused-scope', KebabCase),
-                token(":"),
+                '$0',
+                new Match('_unused-scope', KebabCase),
+                ":",
               ),
             ),
-            token('identifier'),
+            'identifier',
             new Maybe(
               new Caten(
-                token("#"),
-                new Match(false, '_unused-version', KebabCase),
+                "#",
+                new Match('_unused-version', KebabCase),
               ),
             ),
           ),
-          token('.'),
-          token('..'),
+          '.',
+          '..',
           /*new Repeat(token('..'), {
             delimiter: token('/'),
             lowerBound: 1,
@@ -93,13 +94,13 @@ export class HyloaImportAst extends ImportAst {
         new Maybe(
           new Caten(
             new Repeat(
-              token('/'),
+              '/',
               {
                 delimiter: new Or(
-                  new Match(false, '_unused-folder', KebabCase),
-                  new Match(false, '_unused-folder', token('..')),
+                  new Match('_unused-folder', KebabCase),
+                  new Match('_unused-folder', '..'),
                 ),
-                trailingDelimiter: new Caten(token('identifier'), token('.'), token('identifier')),
+                trailingDelimiter: new Caten('identifier', '.', 'identifier'),
                 lowerBound: 1,
               }
             ),
@@ -110,7 +111,7 @@ export class HyloaImportAst extends ImportAst {
     
     new Maybe(
       new Caten(
-        token('with'),
+        'with',
         matchMembersDestructuredMembers,
       ),
     ),

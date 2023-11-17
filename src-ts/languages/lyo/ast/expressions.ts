@@ -1,10 +1,10 @@
-import { Caten, IdentifierToken, Match, Maybe, Or, Repeat, SyntaxTreeNode, Token } from "lr-parser-typescript";
-import { token } from "./tokenizer.js";
+import { Caten, Match, MatchArr, Maybe, Or, Repeat, SyntaxTreeNode, Token } from "lr-parser-typescript";
+import { IdentifierToken } from "../../create-tokenizer.js";
 
 
-let matchValueSetEnumeration = new Match(false, 'value', null!);
-let matchValueLetDeclaration = new Match(false, 'value', null!);
-let matchValueQuantifier = new Match(false, 'value', null!);
+let matchValueSetEnumeration = new Match('value', null!);
+let matchValueLetDeclaration = new Match('value', null!);
+let matchValueQuantifier = new Match('value', null!);
 
 export type BottomRungOrLower =
   | IdentifierToken
@@ -14,8 +14,8 @@ export type BottomRungOrLower =
 export class BottomRung extends SyntaxTreeNode {
   static hidden = true;
   
-  static rule = new Or(
-    token('identifier'),
+  static pattern = new Or(
+    'identifier',
     matchValueSetEnumeration,
   );
 }
@@ -28,9 +28,9 @@ export type Expr =
 export class ExprRung extends SyntaxTreeNode {
   static hidden = true;
   
-  static rule = new Or(
+  static pattern = new Or(
     matchValueLetDeclaration,
-    new Match(false, 'value', BottomRung),
+    new Match('value', BottomRung),
   );
 }
 
@@ -39,19 +39,19 @@ export class ExprRung extends SyntaxTreeNode {
 export class SetEnumeration extends SyntaxTreeNode {
   elements!: IdentifierToken;
   
-  static rule = new Caten(
-    token('{'),
+  static pattern = new Caten(
+    '{',
     new Or(
       new Repeat(
         new Caten(
-          new Match(true, 'elements', ExprRung),
-          token(','),
+          new MatchArr('elements', ExprRung),
+          ',',
         ),
         { lowerBound: 1 },
       ),
-      token(','),
+      ',',
     ),
-    token('}'),
+    '}',
   );
 }
 
@@ -59,11 +59,11 @@ export class LetDeclaration extends SyntaxTreeNode {
   name!: IdentifierToken;
   body!: Expr;
   
-  static rule = new Caten(
-    token('let'),
-    new Match(false, 'name', token('identifier')),
-    token(':'),
-    new Match(false, 'body', new Match(false, 'body', ExprRung)),
+  static pattern = new Caten(
+    'let',
+    new Match('name', 'identifier'),
+    ':',
+    new Match('body', new Match('body', ExprRung)),
   );
 }
 
@@ -73,22 +73,22 @@ export class Quantifier extends SyntaxTreeNode {
   name!: IdentifierToken;
   type!: Expr | null;
   
-  static rule = new Caten(
+  static pattern = new Caten(
     new Or(
-      new Match(false, 'qType', token('Ex')),
-      new Match(false, 'qType', token('All')),
+      new Match('qType', 'Ex'),
+      new Match('qType', 'All'),
     ),
-    new Match(false, 'name', token('identifier')),
+    new Match('name', 'identifier'),
     new Maybe(
       new Caten(
-        token(':'),
-        new Match(false, 'type', ExprRung),
+        ':',
+        new Match('type', ExprRung),
       ),
     ),
     new Or(
       new Caten(
-        token('..'),
-        new Match(false, 'body', ExprRung),
+        '..',
+        new Match('body', ExprRung),
         new Or(), // Not supported yet
       ),
     ),

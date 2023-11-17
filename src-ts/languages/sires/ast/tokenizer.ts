@@ -1,4 +1,4 @@
-import { Tokenizer as tokenizers } from 'lr-parser-typescript';
+import { createTokenizer } from "../../create-tokenizer.js";
 
 export type TokenString = typeof tokenStringArray[number];
 export const tokenStringArray = [
@@ -23,6 +23,4 @@ export const tokenStringArray = [
   '%','^','&','*',';',':','\'','\\','|','/','?','`','~', '+', '-',
 ] as const;
 
-export const siresTokenizer = new tokenizers(tokenStringArray);
-
-export const token = siresTokenizer.token;
+export const siresTokenizer = createTokenizer(tokenStringArray);

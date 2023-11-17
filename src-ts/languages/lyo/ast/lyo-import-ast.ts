@@ -1,84 +1,85 @@
-import { Caten, Match, Maybe, MergedTokens, Or, Repeat, SyntaxTreeNode, Token } from "lr-parser-typescript";
+import { Caten, Match, Maybe, Or, Repeat, SyntaxTreeNode, Token, RawNode } from "lr-parser-typescript";
 import { exit } from "../../../utils/exit.js";
 import { ImportAst } from "../../import.js";
 import { ParsedPath } from "../../module.js";
-
-import { token } from "./tokenizer.js";
+import { IdentifierToken } from "../../create-tokenizer.js";
 
 
 class KebabCase extends SyntaxTreeNode {
   rest!: KebabCase | null;
   
-  static rule = new Repeat(token('identifier'), {
-    delimiter: token('-'),
+  static pattern = new Repeat('identifier', {
+    delimiter: '-',
     lowerBound: 1,
   });
 }
 
 export type ExternalImportAst = LyoImportAst & { parsedPath: ParsedPath };
 
-// TODO proper types in the parser.
-type Raw<T> = T; // Let's cheat a little.
-
 export class LyoImportAst extends ImportAst {
   importKeyword!: Token<'import'>;
-  pathMergedTokens!: MergedTokens;
+  pathTokens!: Token<string>[];
   
   path: string;
   parsedPath: ParsedPath | null;
   
-  constructor(obj: Raw<LyoImportAst>) {
+  constructor(obj: RawNode) {
     super(obj);
     
-    this.path = obj.pathMergedTokens.value;
+    this.path = this.pathTokens
+      .map((token) => {
+        return token instanceof IdentifierToken ? token.value : token.kind;
+      })
+      .join('');
+    
     this.parsedPath = this.parsePath(this.path);
   }
   
   // TODO fix the grammar
-  static rule = new Caten(
-    new Match(false, 'importPosition', token('import')),
+  static pattern = new Caten(
+    new Match('importPosition', 'import'),
     
-    new Match(false, 'pathMergedTokens',
+    new Match('pathTokens',
       new Caten(
         new Or(
           new Caten(
-            token('@'),
+            '@',
             new Maybe(
               new Caten(
                 // This is a temporary hack to avoid grammar conflicts.
                 // I need a better parser, but I'll implement it in Hyloa.
-                token('$0'),
-                new Match(false, '_unused-registry', KebabCase),
+                '$0',
+                new Match('_unused-registry', KebabCase),
               ),
             ),
             new Maybe(
               new Caten(
-                token('$1'),
-                new Match(false, '_unused-scope', KebabCase),
-                token(":"),
+                '$1',
+                new Match('_unused-scope', KebabCase),
+                ":",
               ),
             ),
-            token('identifier'),
+            'identifier',
             new Maybe(
               new Caten(
-                token("#"),
-                new Match(false, '_unused-version', KebabCase),
+                "#",
+                new Match('_unused-version', KebabCase),
               ),
             ),
           ),
-          token('/'),
-          token('.'),
-          new Repeat(token('..'), { delimiter: token('/'), lowerBound: 1 }),
+          '/',
+          '.',
+          new Repeat('..', { delimiter: '/', lowerBound: 1 }),
         ),
         new Repeat(
           new Caten(
-            token('$2'),
-            new Match(false, '_unused', KebabCase),
+            '$2',
+            new Match('_unused', KebabCase),
           ),
-          { delimiter: token('/') },
+          { delimiter: '/' },
         ),
         new Maybe(
-          new Caten(token('identifier'), token('.'), token('identifier')),
+          new Caten('identifier', '.', 'identifier'),
         ),
       ),
     ),

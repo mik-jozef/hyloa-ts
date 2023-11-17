@@ -1,13 +1,13 @@
-import { SyntaxTreeNode, Caten, IdentifierToken, Maybe, Match, Or, Repeat, Token } from 'lr-parser-typescript';
+import { Caten, Match, MatchArr, Maybe, Or, Repeat, SyntaxTreeNode, Token } from 'lr-parser-typescript';
 
 import { DestructuredMembers, Expr } from './expressions.js';
-import { token } from './tokenizer.js';
+import { IdentifierToken } from '../../create-tokenizer.js';
 
 
-export const matchDefaultArgExprRung = new Match(false, 'defaultArg', null!);
-export const matchTypeExprRung = new Match(false, 'type', null!);
-export const matchBodyExprRung = new Match(true, 'body', null!);
-export const matchTypeDestructuredMembers = new Match(false, 'type', null!);
+export const matchDefaultArgExprRung = new Match('defaultArg', null!);
+export const matchTypeExprRung = new Match('type', null!, 'matchTypeExprRung letdec');
+export const matchBodyExprRung = new MatchArr('body', null!, 'matchBodyExprRung');
+export const matchTypeDestructuredMembers = new Match('type', null!);
 
 export class Param extends SyntaxTreeNode {
   name!: IdentifierToken;
@@ -15,19 +15,19 @@ export class Param extends SyntaxTreeNode {
   defaultArg!: Expr | null;
   members!: DestructuredMembers | null;
   
-  static rule = new Caten(
-    new Match(false, 'name', token('identifier')),
+  static pattern = new Caten(
+    new Match('name', 'identifier'),
     new Or(
       new Caten(),
       matchTypeDestructuredMembers,
       new Caten(
-        token(':'),
+        ':',
         matchTypeExprRung,
       ),
     ),
     new Maybe(
       new Caten(
-        token(':='),
+        ':=',
         matchDefaultArgExprRung,
       ),
     ),
@@ -40,27 +40,27 @@ export class LetDeclarationHead extends SyntaxTreeNode {
   params!: Param[];
   type!: Expr;
   
-  static rule = new Caten(
-    token('let'),
-    new Maybe(new Match(false, 'name', token('identifier'))),
+  static pattern = new Caten(
+    'let',
+    new Maybe(new Match('name', 'identifier')),
     
     new Maybe(
       new Caten(
-        new Match(false, 'hasParams', token('(')),
+        new Match('hasParams', '('),
         new Repeat(
-          new Match(true, 'params', Param),
+          new MatchArr('params', Param),
           {
-            delimiter: token(','),
+            delimiter: ',',
             trailingDelimiter: true,
           },
         ),
-        token(')'),
+        ')',
       ),
     ),
     
     new Maybe(
       new Caten(
-        token(':'),
+        ':',
         matchTypeExprRung,
       ),
     ),
@@ -76,27 +76,27 @@ export class LetDeclaration extends SyntaxTreeNode {
   asn!: Token<':='> | null;
   body!: (Expr | LetDeclarationHead)[];
   
-  static rule = new Caten(
-    new Match(false, 'head', LetDeclarationHead),
+  static pattern = new Caten(
+    new Match('head', LetDeclarationHead),
     
     new Or(
       new Caten(
-        new Match(false, 'asn', token(':=')),
+        new Match('asn', ':='),
         matchBodyExprRung,
       ),
       new Caten(
-        token('{'),
+        '{',
         new Repeat(
           new Or(
             matchBodyExprRung,
-            new Match(true, 'body', LetDeclarationHead),
+            new MatchArr('body', LetDeclarationHead),
           ),
           {
-            delimiter: token(';'),
+            delimiter: ';',
             trailingDelimiter: true,
           },
         ),
-        token('}'),
+        '}',
       ),
     ),
   );
